@@ -39,7 +39,7 @@ public class Representante {
         if(!existe_proceso(nombre_proceso)){
             lista_procesos.add(new Proceso(nombre_proceso));
         }
-        if(!existe_fecha(fecha)){
+        if(!Equipo.existe_fecha(fecha, getLista_dias_trabajo())){
             lista_dias_trabajo.add(fecha);
         }
         for (int i = 0; i < lista_procesos.size(); i++) {
@@ -60,20 +60,9 @@ public class Representante {
         return false;
     }
     
-    // Verifica si existe o no la fecha
-    
-    public boolean existe_fecha(Date fecha){
-        for(int i = 0; i < lista_dias_trabajo.size(); i++){
-            if(lista_dias_trabajo.get(i).compareTo(fecha) == 0){
-                return true;
-            }
-        }
-        return false;
-    }
-    
     // Organiza los proceso de mayor a menor de acuerdo a su representatividad
     
-    public void organizar_procesos(double representatividad_procesos, int tiempo_minimo_admitido){
+    public void organizar_procesos(double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios){
         List<Proceso> copia_lista_procesos = new ArrayList<>();
         for (int i = 0; i < lista_procesos.size(); i++) {
             copia_lista_procesos.add(lista_procesos.get(i));
@@ -85,7 +74,7 @@ public class Representante {
             copia_lista_procesos.remove(indice_mayor_proceso(copia_lista_procesos));
         }
         seleccionar_procesos_representativos(representatividad_procesos, tiempo_minimo_admitido);
-        organizar_casos_procesos();
+        organizar_casos_procesos(percentil_inferior_promedios, percentil_superior_promedios);
     }
     
     // Encuentra el indice del proceso con mayor representatividad en la lista
@@ -103,6 +92,10 @@ public class Representante {
     // Selecciona los procesos que son representativos teniendo en cuenta dos parametros, el primero un porcentaje de representatividad y el segundo el tiempo minimo que puede tener un caso
     
     public void seleccionar_procesos_representativos(double representatividad_procesos, int tiempo_minimo_admitido){
+        for (int i = 0; i < lista_procesos.size(); i++) {
+            
+            
+        }
         List<Proceso> copia_lista_procesos = new ArrayList<>();
         List<Proceso> copia_lista_procesos_representativos = new ArrayList<>();
         for (int i = 0; i < lista_procesos.size(); i++) {
@@ -135,12 +128,9 @@ public class Representante {
     
     // Organiza los casos dentro de todos los procesos de menor a mayor
     
-    public void organizar_casos_procesos(){
+    public void organizar_casos_procesos(double percentil_inferior_promedios, double percentil_superior_promedios){
         for (int i = 0; i < lista_procesos.size(); i++) {
-            lista_procesos.get(i).organizar_casos();
-        }
-        for (int i = 0; i < lista_procesos_representativos.size(); i++) {
-            lista_procesos_representativos.get(i).organizar_casos();
+            lista_procesos.get(i).organizar_casos(percentil_inferior_promedios, percentil_superior_promedios);
         }
     }
     
@@ -180,7 +170,7 @@ public class Representante {
     // Calcula e tiempo promedio de un dia de trabajo
     
     public double tiempo_promedio_dia_trabajo(Date fecha){
-        if(existe_fecha(fecha)){
+        if(Equipo.existe_fecha(fecha, getLista_dias_trabajo())){
             double suma = 0;
             int numero_casos = 0;
             for(int i = 0; i < lista_procesos.size(); i++){

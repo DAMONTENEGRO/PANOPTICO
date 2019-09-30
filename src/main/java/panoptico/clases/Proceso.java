@@ -15,12 +15,18 @@ public class Proceso {
     // Atributos
 
     private String nombre_proceso; // Nombre proceso
-    private List<Caso> casos; // Lista dinamica de todoso los casos de ese proceso
+    private List<Caso> casos; // Lista dinamica de todos los casos de ese proceso
+    private double tiempo_promedio_respuesta_entre_percentiles; // El el tiempo promedio de respuesta del proceso calculado entre dos percentiles
+    private double representatividad_dia; // Es la representatividad que tiene el tiempo promedio de respuesta en un dia de 320 minutos
+    private double representatividad_general; //Es la representatividad del proceso con respecto a todos los procesos
     
     // Constructor
 
     public Proceso(String nombre_proceso) {
         this.nombre_proceso = nombre_proceso;
+        tiempo_promedio_respuesta_entre_percentiles = 0;
+        representatividad_dia = 0;
+        representatividad_general = 0;
         casos = new ArrayList<>();
     }
     
@@ -30,6 +36,21 @@ public class Proceso {
     
     public void agregar_caso(int duracion, Date fecha, int id){
         casos.add(new Caso(duracion, fecha, id));
+    }
+    
+    // Organiza los casos del proceso de menor a mayor
+    
+    public void organizar_casos(double percentil_inferior_promedios, double percentil_superior_promedios){
+        List<Caso> copia_lista_casos = new ArrayList<>();
+        for (int i = 0; i < casos.size(); i++) {
+            copia_lista_casos.add(casos.get(i));
+        }
+        int numero_procesos = casos.size();
+        casos.clear();
+        for (int i = 0; i < numero_procesos; i++) {
+            casos.add(copia_lista_casos.get(indice_menor_caso(copia_lista_casos)));
+            copia_lista_casos.remove(indice_menor_caso(copia_lista_casos));
+        }
     }
     
     // Calcula el tiempo promedio de respuesta del proceso
@@ -56,10 +77,10 @@ public class Proceso {
         return suma / numero_casos;
     }
     
-    // Devuelve la suma de todos los tiempos es una fecha especifica o el numero de casos que se atendieron
+    // Devuelve la suma de todos los tiempos en una fecha especifica o el numero de casos que se atendieron
     
     public double suma_o_numero_casos_fecha(Date fecha, boolean tsuma_fcasos){
-        if(existe_fecha(fecha)){
+        if(existe_caso_fecha(fecha)){
             double suma = 0;
             int numero_casos = 0;
             for (int i = 0; i < casos.size(); i++) {
@@ -75,21 +96,6 @@ public class Proceso {
             }
         }else{
             return 0;
-        }
-    }
-    
-    // Organiza los casos del proceso de menor a mayor
-    
-    public void organizar_casos(){
-        List<Caso> copia_lista_casos = new ArrayList<>();
-        for (int i = 0; i < casos.size(); i++) {
-            copia_lista_casos.add(casos.get(i));
-        }
-        int numero_procesos = casos.size();
-        casos.clear();
-        for (int i = 0; i < numero_procesos; i++) {
-            casos.add(copia_lista_casos.get(indice_menor_caso(copia_lista_casos)));
-            copia_lista_casos.remove(indice_menor_caso(copia_lista_casos));
         }
     }
     
@@ -119,7 +125,7 @@ public class Proceso {
     
     // Verifica si existen casos en el proceso correspondientes a una fecha
     
-    public boolean existe_fecha(Date fecha) {
+    public boolean existe_caso_fecha(Date fecha) {
         for (int i = 0; i < casos.size(); i++) {
             if (casos.get(i).getFecha().compareTo(fecha) == 0) {
                 return true;
@@ -278,6 +284,30 @@ public class Proceso {
 
     public void setCasos(List<Caso> casos) {
         this.casos = casos;
+    }
+
+    public double getTiempo_promedio_respuesta_entre_percentiles() {
+        return tiempo_promedio_respuesta_entre_percentiles;
+    }
+
+    public void setTiempo_promedio_respuesta_entre_percentiles(double tiempo_promedio_respuesta_entre_percentiles) {
+        this.tiempo_promedio_respuesta_entre_percentiles = tiempo_promedio_respuesta_entre_percentiles;
+    }
+
+    public double getRepresentatividad_dia() {
+        return representatividad_dia;
+    }
+
+    public void setRepresentatividad_dia(double representatividad_dia) {
+        this.representatividad_dia = representatividad_dia;
+    }
+
+    public double getRepresentatividad_general() {
+        return representatividad_general;
+    }
+
+    public void setRepresentatividad_general(double representatividad_general) {
+        this.representatividad_general = representatividad_general;
     }
     
 }
