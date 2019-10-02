@@ -62,18 +62,20 @@ public class Representante {
     
     // Organiza los proceso de mayor a menor de acuerdo a su representatividad
     
-    public void organizar_procesos(double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios){
+    public void organizar_procesos(double representatividad_procesos, double percentil_inferior_promedios, double percentil_superior_promedios){
         List<Proceso> copia_lista_procesos = new ArrayList<>();
+        int numero_procesos = lista_procesos.size();
+        int suma_todos_casos = 0;
         for (int i = 0; i < lista_procesos.size(); i++) {
             copia_lista_procesos.add(lista_procesos.get(i));
+            suma_todos_casos += lista_procesos.get(i).getCasos().size();
         }
-        int numero_procesos = lista_procesos.size();
         lista_procesos.clear();
         for (int i = 0; i < numero_procesos; i++) {
             lista_procesos.add(copia_lista_procesos.get(indice_mayor_proceso(copia_lista_procesos)));
             copia_lista_procesos.remove(indice_mayor_proceso(copia_lista_procesos));
         }
-        seleccionar_procesos_representativos(representatividad_procesos, tiempo_minimo_admitido);
+        seleccionar_procesos_representativos(representatividad_procesos);
         organizar_casos_procesos(percentil_inferior_promedios, percentil_superior_promedios);
     }
     
@@ -91,7 +93,7 @@ public class Representante {
     
     // Selecciona los procesos que son representativos teniendo en cuenta dos parametros, el primero un porcentaje de representatividad y el segundo el tiempo minimo que puede tener un caso
     
-    public void seleccionar_procesos_representativos(double representatividad_procesos, int tiempo_minimo_admitido){
+    public void seleccionar_procesos_representativos(double representatividad_procesos){
         for (int i = 0; i < lista_procesos.size(); i++) {
             
             

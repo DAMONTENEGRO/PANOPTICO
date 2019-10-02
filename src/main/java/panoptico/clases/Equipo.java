@@ -16,7 +16,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * @author santamaria 
  * @author solano 
  **/
-public class Equipo {
+public final class Equipo {
     
     // Atributos
     
@@ -36,14 +36,14 @@ public class Equipo {
         libro = new XSSFWorkbook(archivo);
         libro.close();
         archivo.close();
-        crear_equipo(representatividad_procesos, tiempo_minimo_admitido, percentil_inferior_promedios, percentil_superior_promedios);
+        generar_equipo(representatividad_procesos, tiempo_minimo_admitido, percentil_inferior_promedios, percentil_superior_promedios);
     }
     
     // Metodos
     
     // Crea el equipo que es el objeto que contiene y organiza toda la base de datos
     
-    public void crear_equipo(double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios) throws IOException{
+    public void generar_equipo(double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios) throws IOException{
         XSSFSheet hoja = libro.getSheetAt(0);
         for (int i = 1; i <= /*hoja.getLastRowNum()*/343804; i++) { // Se puede limitar el numero de datos para hacer pruebas /*hoja.getLastRowNum()*/
             Row fila = hoja.getRow(i);
@@ -66,7 +66,7 @@ public class Equipo {
             }
         }
         for (int i = 0; i < lista_representantes.size(); i++) {
-            lista_representantes.get(i).organizar_procesos(representatividad_procesos, tiempo_minimo_admitido, percentil_inferior_promedios, percentil_superior_promedios);
+            lista_representantes.get(i).organizar_procesos(representatividad_procesos, percentil_inferior_promedios, percentil_superior_promedios);
         }
         libro.close();
         archivo.close();
