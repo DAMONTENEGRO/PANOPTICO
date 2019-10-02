@@ -38,6 +38,36 @@ public class Proceso {
         casos.add(new Caso(duracion, fecha, id));
     }
     
+    // Calcula el tiempo promedio de respuesta en el rango definido por dos percentiles
+    
+    public void tiempo_promedio_proceso_rango(double percentil_inferior, double percentil_superior){
+        if(percentil_inferior <= percentil_superior){
+            double suma = 0;
+            int numero_casos = 0;
+            for (int i = 0; i < casos.size(); i++) {
+                if((casos.get(i).getDuracion() >= calcular_percentil(percentil_inferior)) && (casos.get(i).getDuracion() <= calcular_percentil(percentil_superior))){
+                    suma += casos.get(i).getDuracion();
+                    numero_casos ++;
+                }
+            }
+            tiempo_promedio_respuesta_entre_percentiles = suma / numero_casos;
+        }
+    }
+    
+    // Calcula la representatividad que tendria un caso en la jornada de trabajo
+    
+    public void calcular_representatividad_dia(){
+        representatividad_dia = tiempo_promedio_respuesta_entre_percentiles / 19200;
+    }
+    
+    // Calcula la representatividad del proceso con respecto a los otros
+    
+    public void calcular_representatividad_general(int suma_total_todos_casos){
+        if(suma_total_todos_casos > 0){
+            representatividad_general = casos.size();
+        }
+    }
+    
     // Organiza los casos del proceso de menor a mayor
     
     public void organizar_casos(double percentil_inferior_promedios, double percentil_superior_promedios){
@@ -61,20 +91,6 @@ public class Proceso {
             suma += casos.get(i).getDuracion();
         }
         return suma / casos.size();
-    }
-    
-    // Calcula el tiempro promedio de respuesta en el rango definido por dos percentiles
-    
-    public double tiempo_promedio_proceso_rango(double percentil_inferior, double percentil_superior){
-        double suma = 0;
-        int numero_casos = 0;
-        for (int i = 0; i < casos.size(); i++) {
-            if((casos.get(i).getDuracion() >= calcular_percentil(percentil_inferior)) && (casos.get(i).getDuracion() <= calcular_percentil(percentil_superior))){
-                suma += casos.get(i).getDuracion();
-                numero_casos ++;
-            }
-        }
-        return suma / numero_casos;
     }
     
     // Devuelve la suma de todos los tiempos en una fecha especifica o el numero de casos que se atendieron
