@@ -19,6 +19,8 @@ public class Proceso {
     private double tiempo_promedio_respuesta_entre_percentiles; // El el tiempo promedio de respuesta del proceso calculado entre dos percentiles
     private double representatividad_dia; // Es la representatividad que tiene el tiempo promedio de respuesta en un dia de 320 minutos
     private double representatividad_general; //Es la representatividad del proceso con respecto a todos los procesos
+    private boolean representativo; // Define si el proceso es representativo o no
+    private boolean cotidiano; // Define si el proceso es cotidiano o no
     
     // Constructor
 
@@ -27,6 +29,8 @@ public class Proceso {
         tiempo_promedio_respuesta_entre_percentiles = 0;
         representatividad_dia = 0;
         representatividad_general = 0;
+        representativo = false;
+        cotidiano = false;
         casos = new ArrayList<>();
     }
     
@@ -38,9 +42,55 @@ public class Proceso {
         casos.add(new Caso(duracion, fecha, id));
     }
     
+    // Organiza los datos del proceso y calcula datos importantes sobre el mismo
+    
+    public void organizar_proceso(double percentil_inferior, double percentil_superior, int suma_total_todos_casos){
+        organizar_casos();
+        calcular_tiempo_promedio_proceso_rango(percentil_inferior, percentil_superior);
+        calcular_representatividad_dia();
+        calcular_representatividad_general(suma_total_todos_casos);
+        if(representatividad_dia <= representatividad_general) cotidiano = true;
+    }
+    
+    // Actualiza los valores importantes del proceso
+    
+    public void actualizar_proceso(double percentil_inferior, double percentil_superior, int suma_total_todos_casos){
+        calcular_tiempo_promedio_proceso_rango(percentil_inferior, percentil_superior);
+        calcular_representatividad_dia();
+        calcular_representatividad_general(suma_total_todos_casos);
+        if(representatividad_dia <= representatividad_general) cotidiano = true;
+    }
+    
+    // Organiza los casos del proceso de menor a mayor
+    
+    public void organizar_casos(){
+        List<Caso> copia_lista_casos = new ArrayList<>();
+        for (int i = 0; i < casos.size(); i++) {
+            copia_lista_casos.add(casos.get(i));
+        }
+        int numero_procesos = casos.size();
+        casos.clear();
+        for (int i = 0; i < numero_procesos; i++) {
+            casos.add(copia_lista_casos.get(indice_menor_caso(copia_lista_casos)));
+            copia_lista_casos.remove(indice_menor_caso(copia_lista_casos));
+        }
+    }
+    
+    // Devuelve el indice del caso con menor duracion de una lista de casos
+     
+    public int indice_menor_caso(List<Caso> lista_casos_reducida){
+        int indice_menor = 0;
+        for (int i = 1; i < lista_casos_reducida.size(); i++) {
+            if(lista_casos_reducida.get(indice_menor).getDuracion() > lista_casos_reducida.get(i).getDuracion()){
+                indice_menor = i;
+            }
+        }
+        return indice_menor;
+    }
+    
     // Calcula el tiempo promedio de respuesta en el rango definido por dos percentiles
     
-    public void tiempo_promedio_proceso_rango(double percentil_inferior, double percentil_superior){
+    public void calcular_tiempo_promedio_proceso_rango(double percentil_inferior, double percentil_superior){
         if(percentil_inferior <= percentil_superior){
             double suma = 0;
             int numero_casos = 0;
@@ -51,6 +101,18 @@ public class Proceso {
                 }
             }
             tiempo_promedio_respuesta_entre_percentiles = suma / numero_casos;
+        }
+    }
+    
+    // Calcula un percentil 
+    
+    public double calcular_percentil(double percentil){
+        double posicion_percentil = casos.size() * (percentil / 100);
+        if((posicion_percentil % 1) != 0){
+            posicion_percentil -= posicion_percentil % 1;
+            return casos.get((int) posicion_percentil).getDuracion();
+        }else{
+            return ((double) casos.get((int) posicion_percentil).getDuracion() + (double) casos.get((int) posicion_percentil-1).getDuracion()) / 2;
         }
     }
     
@@ -68,20 +130,13 @@ public class Proceso {
         }
     }
     
-    // Organiza los casos del proceso de menor a mayor
+    // Hace al proceso representantivo
     
-    public void organizar_casos(double percentil_inferior_promedios, double percentil_superior_promedios){
-        List<Caso> copia_lista_casos = new ArrayList<>();
-        for (int i = 0; i < casos.size(); i++) {
-            copia_lista_casos.add(casos.get(i));
-        }
-        int numero_procesos = casos.size();
-        casos.clear();
-        for (int i = 0; i < numero_procesos; i++) {
-            casos.add(copia_lista_casos.get(indice_menor_caso(copia_lista_casos)));
-            copia_lista_casos.remove(indice_menor_caso(copia_lista_casos));
-        }
+    public void hacer_representativo(){
+        representativo = true;
     }
+    
+    /* EN REVISION */
     
     // Calcula el tiempo promedio de respuesta del proceso
     
@@ -115,30 +170,6 @@ public class Proceso {
         }
     }
     
-    // Devuelve el indice del caso con menor duracion de una lista de casos
-     
-    public int indice_menor_caso(List<Caso> lista_casos_reducida){
-        int indice_menor = 0;
-        for (int i = 1; i < lista_casos_reducida.size(); i++) {
-            if(lista_casos_reducida.get(indice_menor).getDuracion() > lista_casos_reducida.get(i).getDuracion()){
-                indice_menor = i;
-            }
-        }
-        return indice_menor;
-    }
-    
-    // Calcula un percentil 
-    
-    public double calcular_percentil(double percentil){
-        double posicion_percentil = casos.size() * (percentil / 100);
-        if((posicion_percentil % 1) != 0){
-            posicion_percentil -= posicion_percentil % 1;
-            return casos.get((int) posicion_percentil).getDuracion();
-        }else{
-            return ((double) casos.get((int) posicion_percentil).getDuracion() + (double) casos.get((int) posicion_percentil-1).getDuracion()) / 2;
-        }
-    }
-    
     // Verifica si existen casos en el proceso correspondientes a una fecha
     
     public boolean existe_caso_fecha(Date fecha) {
@@ -149,6 +180,8 @@ public class Proceso {
         }
         return false;
     }
+    
+    /* EN REVISION */
     
     // Codigo de referencia para pruebas del proyecto "HORUS"
     
@@ -324,6 +357,22 @@ public class Proceso {
 
     public void setRepresentatividad_general(double representatividad_general) {
         this.representatividad_general = representatividad_general;
+    }
+
+    public boolean isRepresentativo() {
+        return representativo;
+    }
+
+    public void setRepresentativo(boolean representativo) {
+        this.representativo = representativo;
+    }
+
+    public boolean isCotidiano() {
+        return cotidiano;
+    }
+
+    public void setCotidiano(boolean cotidiano) {
+        this.cotidiano = cotidiano;
     }
     
 }

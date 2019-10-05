@@ -28,7 +28,7 @@ public final class Equipo {
 
     // Constructor
 
-    public Equipo(String nombre_ruta_archivo, double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios) throws FileNotFoundException, IOException {
+    public Equipo(String nombre_ruta_archivo, double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios, double percentil_tiempo_preparacion) throws FileNotFoundException, IOException {
         this.nombre_ruta_archivo = nombre_ruta_archivo;
         lista_representantes = new ArrayList<>();
         lista_dias_trabajo = new ArrayList<>();
@@ -36,18 +36,18 @@ public final class Equipo {
         libro = new XSSFWorkbook(archivo);
         libro.close();
         archivo.close();
-        generar_equipo(representatividad_procesos, tiempo_minimo_admitido, percentil_inferior_promedios, percentil_superior_promedios);
+        generar_equipo(representatividad_procesos, tiempo_minimo_admitido, percentil_inferior_promedios, percentil_superior_promedios, percentil_tiempo_preparacion);
     }
     
     // Metodos
     
     // Crea el equipo que es el objeto que contiene y organiza toda la base de datos
     
-    public void generar_equipo(double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios) throws IOException{
+    public void generar_equipo(double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios, double percentil_tiempo_preparacion) throws IOException{
         XSSFSheet hoja = libro.getSheetAt(0);
-        for (int i = 1; i <= /*hoja.getLastRowNum()*/343804; i++) { // Se puede limitar el numero de datos para hacer pruebas /*hoja.getLastRowNum()*/
+        for (int i = 1; i <= hoja.getLastRowNum(); i++) {
             Row fila = hoja.getRow(i);
-            //String skill = fila.getCell(0).getStringCellValue().toLowerCase();
+            String skill = fila.getCell(0).getStringCellValue().toLowerCase();
             String nombre_representante = fila.getCell(1).getStringCellValue().toLowerCase();
             String nombre_proceso = fila.getCell(2).getStringCellValue().toLowerCase();
             Date fecha = fila.getCell(3).getDateCellValue();
@@ -66,7 +66,7 @@ public final class Equipo {
             }
         }
         for (int i = 0; i < lista_representantes.size(); i++) {
-            lista_representantes.get(i).organizar_procesos(representatividad_procesos, percentil_inferior_promedios, percentil_superior_promedios);
+            lista_representantes.get(i).organizar_representante(representatividad_procesos, percentil_inferior_promedios, percentil_superior_promedios, percentil_tiempo_preparacion);
         }
         libro.close();
         archivo.close();
@@ -109,6 +109,8 @@ public final class Equipo {
         }
         return false;
     }
+    
+    /* EN REVISION */
     
     // Codigo de referencia para pruebas del proyecto "HORUS"
     
