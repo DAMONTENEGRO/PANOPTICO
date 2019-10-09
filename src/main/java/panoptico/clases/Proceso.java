@@ -126,7 +126,7 @@ public class Proceso {
     
     public void calcular_representatividad_general(int suma_total_todos_casos){
         if(suma_total_todos_casos > 0){
-            representatividad_general = casos.size();
+            representatividad_general = (double) casos.size()/suma_total_todos_casos;
         }
     }
     
@@ -134,18 +134,6 @@ public class Proceso {
     
     public void hacer_representativo(){
         representativo = true;
-    }
-    
-    /* EN REVISION */
-    
-    // Calcula el tiempo promedio de respuesta del proceso
-    
-    public double tiempo_promedio_proceso(){
-        double suma = 0;
-        for (int i = 0; i < casos.size(); i++) {
-            suma += casos.get(i).getDuracion();
-        }
-        return suma / casos.size();
     }
     
     // Devuelve la suma de todos los tiempos en una fecha especifica o el numero de casos que se atendieron
@@ -179,6 +167,18 @@ public class Proceso {
             }
         }
         return false;
+    }
+    
+    /* EN REVISION */
+    
+    // Calcula el tiempo promedio de respuesta del proceso
+    
+    public double tiempo_promedio_proceso(){
+        double suma = 0;
+        for (int i = 0; i < casos.size(); i++) {
+            suma += casos.get(i).getDuracion();
+        }
+        return suma / casos.size();
     }
     
     /* EN REVISION */
