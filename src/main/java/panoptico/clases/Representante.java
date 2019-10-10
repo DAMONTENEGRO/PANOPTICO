@@ -19,14 +19,17 @@ public class Representante {
     private double tiempo_preparacion; // Es el tiempo que necesita el representante para terminar los chats que tiene activos y salir a su descanso
     private List<Date> lista_dias_trabajo; // Es una lista dinamica con todas las fechas en las que ha trabajado el representante
     private List<Proceso> lista_procesos; // Es una lista dinamica con todos los procesos que ha atendido el representante
+    private boolean representativo; // Define si el representante es representativo o no
     
     // Constructor
 
-    public Representante(String nombre_usuario) {
+    public Representante(String nombre_usuario, String skill) {
         this.nombre_usuario = nombre_usuario;
+        this.skill = skill;
         lista_dias_trabajo = new ArrayList<>();
         lista_procesos = new ArrayList<>();
         lista_procesos.add(new Proceso("drop"));
+        representativo = false;
     }
     
     // Metodos
@@ -56,6 +59,13 @@ public class Representante {
             }
         }
         return false;
+    }
+    
+    // Elimina los datos del representante
+    
+    public void eliminar_datos_representante(){
+        lista_dias_trabajo.clear();
+        lista_procesos.clear();
     }
     
     // Organiza los procesos de mayor a menor de acuerdo a su representatividad 
@@ -92,48 +102,64 @@ public class Representante {
     // Organiza todos los procesos y selecciona los procesos que son representativos 
     
     public void organizar_procesos_representante(double representatividad_procesos, double percentil_inferior_promedios, double percentil_superior_promedios, int suma_total_todos_casos){
-        int suma_representatividad = 0;
+        double suma_representatividad = 0;
         int suma_total_todos_casos_representativos = 0;
         for (int i = 0; i < lista_procesos.size(); i++) {
             lista_procesos.get(i).organizar_proceso(percentil_inferior_promedios, percentil_superior_promedios, suma_total_todos_casos);
-            if(suma_representatividad <= representatividad_procesos){
-                lista_procesos.get(i).hacer_representativo();
+            suma_representatividad += lista_procesos.get(i).getRepresentatividad_general();
+            if(suma_representatividad <= representatividad_procesos/100){
+                lista_procesos.get(i).setRepresentativo(true);
                 suma_total_todos_casos_representativos += lista_procesos.get(i).getCasos().size();
             }
         }
         for (int i = 0; i < lista_procesos.size(); i++) {
-            lista_procesos.get(i).actualizar_proceso(percentil_inferior_promedios, percentil_superior_promedios, suma_total_todos_casos_representativos);
+            if(lista_procesos.get(i).isRepresentativo())lista_procesos.get(i).actualizar_proceso(suma_total_todos_casos_representativos);
         }
     }
     
     // Calcula un percentil tomando los tiempos promedio de respuesta diarios del representante
     
     public void calcular_tiempo_preparacion_percentil(double percentil_tiempo_preparacion){
-        double posicion_percentil = lista_dias_trabajo.size() * (percentil_tiempo_preparacion / 100);
+        List<Double> copia_lista_promedios = new ArrayList<>();
+        for (int i = 0; i < lista_dias_trabajo.size(); i++) {
+            copia_lista_promedios.add(tiempo_promedio_dia_trabajo(lista_dias_trabajo.get(i)));
+        }
+        List<Double> lista_promedios = new ArrayList<>();
+        for (int i = 0; i < lista_dias_trabajo.size(); i++) {
+            lista_promedios.add(copia_lista_promedios.get(indice_menor_promedio(copia_lista_promedios)));
+            copia_lista_promedios.remove(indice_menor_promedio(copia_lista_promedios));
+        }
+        double posicion_percentil = lista_promedios.size() * (percentil_tiempo_preparacion / 100);
         if((posicion_percentil % 1) != 0){
-            posicion_percentil -= posicion_percentil % 1;
-            tiempo_preparacion = tiempo_promedio_dia_trabajo(lista_dias_trabajo.get((int) posicion_percentil));
+            tiempo_preparacion = lista_promedios.get((int) posicion_percentil);
         }else{
-            tiempo_preparacion = (tiempo_promedio_dia_trabajo(lista_dias_trabajo.get((int) posicion_percentil)) + tiempo_promedio_dia_trabajo(lista_dias_trabajo.get((int) posicion_percentil-1))) / 2;
+            tiempo_preparacion = (lista_promedios.get((int) posicion_percentil) + lista_promedios.get((int) posicion_percentil-1)) / 2;
         }
     }
     
     // Calcula el tiempo promedio de un dia de trabajo
     
     public double tiempo_promedio_dia_trabajo(Date fecha){
-        if(Equipo.existe_fecha(fecha, getLista_dias_trabajo())){
-            double suma = 0;
-            int numero_casos = 0;
-            for(int i = 0; i < lista_procesos.size(); i++){
-                if(lista_procesos.get(i).suma_o_numero_casos_fecha(fecha, false) > 0){
-                    suma += lista_procesos.get(i).suma_o_numero_casos_fecha(fecha, true);
-                    numero_casos += lista_procesos.get(i).suma_o_numero_casos_fecha(fecha, false);
-                }
-            }
-            return suma / numero_casos;
-        }else{
-            return 0;
+        double suma = 0;
+        int numero_casos = 0;
+        for(int i = 0; i < lista_procesos.size(); i++){
+            suma += lista_procesos.get(i).suma_o_numero_casos_fecha(fecha, true);
+            numero_casos += lista_procesos.get(i).suma_o_numero_casos_fecha(fecha, false);
         }
+        if(numero_casos > 0) return suma / numero_casos;
+        return 0;
+    }
+    
+    // Encuentra el indice del menor promedio en una lista
+
+    public int indice_menor_promedio(List<Double> lista_promedios_reducida){
+        int indice_menor = 0;
+        for (int i = 1; i < lista_promedios_reducida.size(); i++) {
+            if(lista_promedios_reducida.get(indice_menor) > lista_promedios_reducida.get(i)){
+                indice_menor = i;
+            }
+        }
+        return indice_menor;
     }
     
     /* EN REVISION */
@@ -315,6 +341,14 @@ public class Representante {
 
     public void setLista_procesos(List<Proceso> lista_procesos) {
         this.lista_procesos = lista_procesos;
+    }
+
+    public boolean isRepresentativo() {
+        return representativo;
+    }
+
+    public void setRepresentativo(boolean representativo) {
+        this.representativo = representativo;
     }
 
 }

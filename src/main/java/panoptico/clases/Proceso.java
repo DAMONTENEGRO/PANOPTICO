@@ -44,19 +44,16 @@ public class Proceso {
     
     // Organiza los datos del proceso y calcula datos importantes sobre el mismo
     
-    public void organizar_proceso(double percentil_inferior, double percentil_superior, int suma_total_todos_casos){
+    public void organizar_proceso(double percentil_inferior, double percentil_superior, double suma_total_todos_casos){
         organizar_casos();
         calcular_tiempo_promedio_proceso_rango(percentil_inferior, percentil_superior);
         calcular_representatividad_dia();
         calcular_representatividad_general(suma_total_todos_casos);
-        if(representatividad_dia <= representatividad_general) cotidiano = true;
     }
     
     // Actualiza los valores importantes del proceso
     
-    public void actualizar_proceso(double percentil_inferior, double percentil_superior, int suma_total_todos_casos){
-        calcular_tiempo_promedio_proceso_rango(percentil_inferior, percentil_superior);
-        calcular_representatividad_dia();
+    public void actualizar_proceso(double suma_total_todos_casos){
         calcular_representatividad_general(suma_total_todos_casos);
         if(representatividad_dia <= representatividad_general) cotidiano = true;
     }
@@ -124,16 +121,10 @@ public class Proceso {
     
     // Calcula la representatividad del proceso con respecto a los otros
     
-    public void calcular_representatividad_general(int suma_total_todos_casos){
+    public void calcular_representatividad_general(double suma_total_todos_casos){
         if(suma_total_todos_casos > 0){
-            representatividad_general = (double) casos.size()/suma_total_todos_casos;
+            representatividad_general = ((double) casos.size())/ suma_total_todos_casos;
         }
-    }
-    
-    // Hace al proceso representantivo
-    
-    public void hacer_representativo(){
-        representativo = true;
     }
     
     // Devuelve la suma de todos los tiempos en una fecha especifica o el numero de casos que se atendieron

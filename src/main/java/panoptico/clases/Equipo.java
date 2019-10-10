@@ -28,22 +28,12 @@ public final class Equipo {
 
     // Constructor
 
-    public Equipo(String nombre_ruta_archivo, double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios, double percentil_tiempo_preparacion) throws FileNotFoundException, IOException {
+    public Equipo(String nombre_ruta_archivo, double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios, double percentil_tiempo_preparacion, double representatividad_dias_representante) throws FileNotFoundException, IOException {
         this.nombre_ruta_archivo = nombre_ruta_archivo;
         lista_representantes = new ArrayList<>();
         lista_dias_trabajo = new ArrayList<>();
         archivo = new FileInputStream(nombre_ruta_archivo);
         libro = new XSSFWorkbook(archivo);
-        libro.close();
-        archivo.close();
-        generar_equipo(representatividad_procesos, tiempo_minimo_admitido, percentil_inferior_promedios, percentil_superior_promedios, percentil_tiempo_preparacion);
-    }
-    
-    // Metodos
-    
-    // Crea el equipo que es el objeto que contiene y organiza toda la base de datos
-    
-    public void generar_equipo(double representatividad_procesos, int tiempo_minimo_admitido, double percentil_inferior_promedios, double percentil_superior_promedios, double percentil_tiempo_preparacion) throws IOException{
         XSSFSheet hoja = libro.getSheetAt(0);
         for (int i = 1; i <= hoja.getLastRowNum(); i++) {
             Row fila = hoja.getRow(i);
@@ -57,16 +47,19 @@ public final class Equipo {
             }
             int duracion = (int) fila.getCell(5).getNumericCellValue();
             int id = (int) fila.getCell(6).getNumericCellValue();
-            if(duracion >= tiempo_minimo_admitido){
-                if(drop){
-                    agregar_caso_representante(duracion, fecha, id, "drop", nombre_representante);
-                }else{
-                    agregar_caso_representante(duracion, fecha, id, nombre_proceso, nombre_representante);
-                }
+            if(drop){
+                agregar_caso_representante(duracion, fecha, id, "drop", nombre_representante, skill);
+            }else if(duracion >= tiempo_minimo_admitido){
+                agregar_caso_representante(duracion, fecha, id, nombre_proceso, nombre_representante, skill);
             }
         }
         for (int i = 0; i < lista_representantes.size(); i++) {
-            lista_representantes.get(i).organizar_representante(representatividad_procesos, percentil_inferior_promedios, percentil_superior_promedios, percentil_tiempo_preparacion);
+            if(lista_representantes.get(i).getLista_dias_trabajo().size() > lista_dias_trabajo.size() * (representatividad_dias_representante/100)){
+                lista_representantes.get(i).setRepresentativo(true);
+                lista_representantes.get(i).organizar_representante(representatividad_procesos, percentil_inferior_promedios, percentil_superior_promedios, percentil_tiempo_preparacion);
+            }else{
+                lista_representantes.get(i).eliminar_datos_representante();
+            }
         }
         libro.close();
         archivo.close();
@@ -74,9 +67,9 @@ public final class Equipo {
     
     // Agrega un caso a un representante en especifico, sino existe lo crea y lo asigna
     
-    public void agregar_caso_representante(int duracion, Date fecha, int id, String nombre_proceso, String nombre_representante){
+    public void agregar_caso_representante(int duracion, Date fecha, int id, String nombre_proceso, String nombre_representante, String skill){
         if(!existe_representante(nombre_representante)){
-            lista_representantes.add(new Representante(nombre_representante));
+            lista_representantes.add(new Representante(nombre_representante, skill));
         }
         if(!existe_fecha(fecha, getLista_dias_trabajo())){
             lista_dias_trabajo.add(fecha);
@@ -108,6 +101,26 @@ public final class Equipo {
             }
         }
         return false;
+    }
+    
+    // Calcula el promedio del tiempo de preparacion de todos los representantes
+    
+    public double calcular_tiempo_preparacion_equipo(double porcentaje_dias_representativo, String skill){
+        int suma_tiempos_preparacion = 0;
+        int suma_representantes_representantivos = 0;
+        for (int i = 0; i < lista_representantes.size(); i++) {
+            if(lista_representantes.get(i).getLista_dias_trabajo().size() >= lista_dias_trabajo.size()*(porcentaje_dias_representativo/100)){
+                if(lista_representantes.get(i).getSkill().equals(skill) || skill.equals("equipo")){
+                    suma_tiempos_preparacion += lista_representantes.get(i).getTiempo_preparacion();
+                    suma_representantes_representantivos ++; 
+                }
+            }
+        }
+        if(suma_representantes_representantivos > 0){
+            return suma_tiempos_preparacion / suma_representantes_representantivos;
+        }else{
+            return 0; 
+        }
     }
     
     /* EN REVISION */
