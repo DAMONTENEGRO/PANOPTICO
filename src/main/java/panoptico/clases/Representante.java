@@ -162,6 +162,37 @@ public class Representante {
         return indice_menor;
     }
     
+    public void definir_horas_break(){
+        List<Double> simulacion_tiempos_dia = new ArrayList<>();
+        double representatividad_dia = 0;
+        double suma_tiempos_simulacion = 0;
+        for (int i = 0; i < lista_procesos.size(); i++) {
+            if(lista_procesos.get(i).isCotidiano()){
+                while((representatividad_dia <= lista_procesos.get(i).getRepresentatividad_general()) && (suma_tiempos_simulacion <= 19200)){
+                    simulacion_tiempos_dia.add(lista_procesos.get(i).getTiempo_promedio_respuesta_entre_percentiles());
+                    suma_tiempos_simulacion += lista_procesos.get(i).getTiempo_promedio_respuesta_entre_percentiles();
+                    representatividad_dia += lista_procesos.get(i).getRepresentatividad_dia();
+                }
+                representatividad_dia = 0;
+            }
+        }
+        if(suma_tiempos_simulacion < 19200){
+            simulacion_tiempos_dia.add(19200 - suma_tiempos_simulacion);
+        }
+        
+        // Pruebas
+        int cuenta_casos = 0;
+        double suma_tiempos = 0;
+        System.out.println(nombre_usuario);
+        for (int i = 0; i < simulacion_tiempos_dia.size(); i++) {
+            System.out.println(simulacion_tiempos_dia.get(i));
+            suma_tiempos += simulacion_tiempos_dia.get(i);
+            cuenta_casos++;
+        }
+        System.out.println(cuenta_casos);
+        System.out.println(suma_tiempos);
+    }
+    
     /* EN REVISION */
     
     // Codigo de referencia para pruebas del proyecto "HORUS"
