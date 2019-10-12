@@ -2,8 +2,10 @@
 package panoptico.clases;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import org.apache.commons.lang.ArrayUtils;
 
 /**
  * @author montenegro 
@@ -20,16 +22,20 @@ public class Representante {
     private List<Date> lista_dias_trabajo; // Es una lista dinamica con todas las fechas en las que ha trabajado el representante
     private List<Proceso> lista_procesos; // Es una lista dinamica con todos los procesos que ha atendido el representante
     private boolean representativo; // Define si el representante es representativo o no
+    private List<Double[]> matriz_simulacion; // Es una lista dinamica que contiene las sumas progresivas de los datos simulados
+    private double[] probabilidad_salida_rango; // Son las probabilidades que existen de que se cierre un caso en un rango definido por el usuario
     
     // Constructor
 
-    public Representante(String nombre_usuario, String skill) {
+    public Representante(String nombre_usuario, String skill, int rango_minutos) {
         this.nombre_usuario = nombre_usuario;
         this.skill = skill;
         lista_dias_trabajo = new ArrayList<>();
         lista_procesos = new ArrayList<>();
         lista_procesos.add(new Proceso("drop"));
         representativo = false;
+        matriz_simulacion = new ArrayList<>();
+        probabilidad_salida_rango = new double[320/rango_minutos];
     }
     
     // Metodos
@@ -168,7 +174,7 @@ public class Representante {
         double suma_tiempos_simulacion = 0;
         for (int i = 0; i < lista_procesos.size(); i++) {
             if(lista_procesos.get(i).isCotidiano()){
-                while((representatividad_dia <= lista_procesos.get(i).getRepresentatividad_general()) && (suma_tiempos_simulacion <= 19200)){
+                while(representatividad_dia <= lista_procesos.get(i).getRepresentatividad_general()){
                     simulacion_tiempos_dia.add(lista_procesos.get(i).getTiempo_promedio_respuesta_entre_percentiles());
                     suma_tiempos_simulacion += lista_procesos.get(i).getTiempo_promedio_respuesta_entre_percentiles();
                     representatividad_dia += lista_procesos.get(i).getRepresentatividad_dia();
@@ -179,18 +185,40 @@ public class Representante {
         if(suma_tiempos_simulacion < 19200){
             simulacion_tiempos_dia.add(19200 - suma_tiempos_simulacion);
         }
-        
-        // Pruebas
-        int cuenta_casos = 0;
-        double suma_tiempos = 0;
-        System.out.println(nombre_usuario);
-        for (int i = 0; i < simulacion_tiempos_dia.size(); i++) {
-            System.out.println(simulacion_tiempos_dia.get(i));
-            suma_tiempos += simulacion_tiempos_dia.get(i);
-            cuenta_casos++;
+        List<Combinatoria> indices_simulacion = new ArrayList<>();
+        for (int i = 1; i < simulacion_tiempos_dia.size(); i++) {
+            indices_simulacion.add(new Combinatoria(simulacion_tiempos_dia.size(), i));
+            Double[] suma_indices_fila = ArrayUtils.toObject(sumar_indices_simulacion(simulacion_tiempos_dia, indices_simulacion.get(i-1).getCombinaciones_sin_repeticion()));
+            matriz_simulacion.add(suma_indices_fila);
         }
-        System.out.println(cuenta_casos);
-        System.out.println(suma_tiempos);
+        double probabilidad = 0;
+        for (int i = 0; i < matriz_simulacion.size(); i++) {
+            for (Double suma_combinacion_sin_repeticion : matriz_simulacion.get(i)) {
+                probabilidad = 1.0 / matriz_simulacion.get(i).length;
+                calcular_probabilidad_salida_rango(suma_combinacion_sin_repeticion, probabilidad);
+            }
+        }
+    }
+    
+    public double[] sumar_indices_simulacion(List<Double> simulacion_tiempos_dia, int[][] combinaciones_sin_repeticion){
+        double[] suma_indices_fila = new double[combinaciones_sin_repeticion.length];
+        for (int i = 0; i < combinaciones_sin_repeticion.length; i++) {
+            for (int j = 0; j < combinaciones_sin_repeticion[i].length; j++) {
+                suma_indices_fila[i] += simulacion_tiempos_dia.get(combinaciones_sin_repeticion[i][j]-1);
+            }
+        }
+        Arrays.sort(suma_indices_fila);
+        return suma_indices_fila;
+    }
+    
+    public void calcular_probabilidad_salida_rango(double suma_combinacion_sin_repeticion, double probabilidad){
+        int rango = (320 / probabilidad_salida_rango.length)*60;
+        for (int i = 0; i < probabilidad_salida_rango.length; i++) {
+            if((suma_combinacion_sin_repeticion >= rango*i) && (suma_combinacion_sin_repeticion < rango*(i+1))){
+                probabilidad_salida_rango[i] += probabilidad;
+                break;
+            }
+        }
     }
     
     /* EN REVISION */
@@ -380,6 +408,22 @@ public class Representante {
 
     public void setRepresentativo(boolean representativo) {
         this.representativo = representativo;
+    }
+
+    public List<Double[]> getMatriz_simulacion() {
+        return matriz_simulacion;
+    }
+
+    public void setMatriz_simulacion(List<Double[]> matriz_simulacion) {
+        this.matriz_simulacion = matriz_simulacion;
+    }
+
+    public double[] getProbabilidad_salida_rango() {
+        return probabilidad_salida_rango;
+    }
+
+    public void setProbabilidad_salida_rango(double[] probabilidad_salida_rango) {
+        this.probabilidad_salida_rango = probabilidad_salida_rango;
     }
 
 }
