@@ -10,21 +10,11 @@ public class Combinatoria {
     
     // Atributos
 
-    private byte[][][] combinaciones_sin_repeticion; // Es una matriz tridimensional que contiene
-    private int[][] matriz_suma_indices_simulaciones; // Es la matriz que contiene todas las sumas de combinaciones sin repeticion
-    private int[] simulacion; // Es la simulacion de un dia de trabajo
+    private byte[][] combinaciones_sin_repeticion; // Es una matriz tridimensional que contiene 
     
     // Constructor
 
-    public Combinatoria(int[] simulacion) {
-        simulacion = new int[simulacion.length];
-        System.arraycopy(this.simulacion, 0, simulacion, 0, simulacion.length);
-        matriz_suma_indices_simulaciones = new int[this.simulacion.length-1][];
-        combinaciones_sin_repeticion = new byte [this.simulacion.length-1][][];
-        for (int i = 0; i < this.simulacion.length; i++) {
-            
-        }
-        
+    public Combinatoria(byte numeros, int numeros_elegidos) {
         if((numeros_elegidos > 0) && (numeros_elegidos <= numeros)){
             combinaciones_sin_repeticion = new byte[(int) combinacion_sin_repeticion(numeros, numeros_elegidos)][numeros_elegidos];
             byte[] combinacion_por_fila = new byte[numeros_elegidos];
@@ -39,7 +29,6 @@ public class Combinatoria {
         }else{
             combinaciones_sin_repeticion = new byte[1][1];
         }
-
     }
     
     // Devuelve la siguiente combinacion sin repeticion a partir de una combinacion sin repeticion de n numeros sobre un total de m numeros
@@ -52,7 +41,7 @@ public class Combinatoria {
                 if(siguiente_combinacion[i] < numeros-(siguiente_combinacion.length-(i+1))){
                     siguiente_combinacion[i] += 1;
                     for(int j = i+1; j < siguiente_combinacion.length; j++){
-                        siguiente_combinacion[j] = siguiente_combinacion[i]+j-i;
+                        siguiente_combinacion[j] = (byte) (siguiente_combinacion[i]+j-i);
                     }
                     return siguiente_combinacion;
                 }
@@ -105,20 +94,12 @@ public class Combinatoria {
     
     // Getters and Setters
 
-    public byte[][][] getCombinaciones_sin_repeticion() {
+    public byte[][] getCombinaciones_sin_repeticion() {
         return combinaciones_sin_repeticion;
     }
 
-    public void setCombinaciones_sin_repeticion(byte[][][] combinaciones_sin_repeticion) {
+    public void setCombinaciones_sin_repeticion(byte[][] combinaciones_sin_repeticion) {
         this.combinaciones_sin_repeticion = combinaciones_sin_repeticion;
-    }
-
-    public int[] getSimulacion() {
-        return simulacion;
-    }
-
-    public void setSimulacion(int[] simulacion) {
-        this.simulacion = simulacion;
     }
 
 }

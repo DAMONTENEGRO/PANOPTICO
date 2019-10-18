@@ -4,9 +4,11 @@ package panoptico.clases;
 import java.util.Date;
 
 /**
- * @author montenegro
- */
-public class Caso {
+ * @author montenegro 
+ * @author santamaria 
+ * @author solano 
+ **/
+public class Caso implements Comparable<Caso>{
     
     // Atributos
     
@@ -46,6 +48,17 @@ public class Caso {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    @Override
+    public int compareTo(Caso caso) {
+        if(duracion < caso.getDuracion()){
+            return -1;
+        }else if(duracion > caso.getDuracion()){
+            return 1;
+        }else{
+            return 0;
+        }
     }
 
 }
