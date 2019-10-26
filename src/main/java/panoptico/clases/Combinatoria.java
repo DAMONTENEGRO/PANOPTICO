@@ -10,71 +10,91 @@ public class Combinatoria {
     
     // Atributos
 
-    private byte[][] combinaciones_sin_repeticion; // Es una matriz tridimensional que contiene 
+    private String[][] matriz_combinaciones_sin_repeticion; // Es una matriz que contiene todas las combinaciones sin repeticion
+    private int[][] matriz_suma_indices; // Es una matriz que tiene la suma de todas las combinaciones sin repeticion
     
     // Constructor
 
-    public Combinatoria(byte numeros, int numeros_elegidos) {
-        if((numeros_elegidos > 0) && (numeros_elegidos <= numeros)){
-            combinaciones_sin_repeticion = new byte[(int) combinacion_sin_repeticion(numeros, numeros_elegidos)][numeros_elegidos];
-            byte[] combinacion_por_fila = new byte[numeros_elegidos];
-            for (int i = 0; i < combinacion_por_fila.length; i++) {
-                combinacion_por_fila[i] = (byte) (i+1);
+    public Combinatoria(int numeros_combinados, int[] indices_a_sumar) {
+        matriz_combinaciones_sin_repeticion = new String[numeros_combinados-1][];
+        matriz_suma_indices = new int[numeros_combinados-1][];
+        for (int i = 0; i < matriz_combinaciones_sin_repeticion.length; i++) {
+            combinaciones_sin_repeticion_numeros_elegidos(numeros_combinados, i+1, i);
+        }
+        llenar_matriz_suma_indices(indices_a_sumar);
+    }
+    
+    // Devuelve la suma de los valores de una lista de todas las posiciones indicadas en un arreglo de enteros
+    
+    public void llenar_matriz_suma_indices(int[] indices_a_sumar){
+        for (int i = 0; i < matriz_combinaciones_sin_repeticion.length; i++) {
+            for (int j = 0; j < matriz_combinaciones_sin_repeticion[i].length; j++) {
+                matriz_suma_indices[i][j] = sumar_indices_combinacion_sin_repeticion(matriz_combinaciones_sin_repeticion[i][j] , indices_a_sumar);
             }
-            combinaciones_sin_repeticion[0] = combinacion_por_fila;
-            for (int i = 1; i < combinaciones_sin_repeticion.length; i++) {
-                combinaciones_sin_repeticion[i] = siguiente_combinacion_sin_repeticion(combinacion_por_fila, numeros);
-                combinacion_por_fila = siguiente_combinacion_sin_repeticion(combinacion_por_fila, numeros);
-            } 
-        }else{
-            combinaciones_sin_repeticion = new byte[1][1];
         }
     }
     
-    // Devuelve la siguiente combinacion sin repeticion a partir de una combinacion sin repeticion de n numeros sobre un total de m numeros
-   
-    static byte[] siguiente_combinacion_sin_repeticion(byte[] combinacion_sin_repeticion, byte numeros){
-        byte[] siguiente_combinacion = new byte[combinacion_sin_repeticion.length];
-        System.arraycopy(combinacion_sin_repeticion, 0, siguiente_combinacion, 0, combinacion_sin_repeticion.length);
-        if(verificar_orden_arreglo_menor_a_mayor(combinacion_sin_repeticion) && (combinacion_sin_repeticion[combinacion_sin_repeticion.length-1] <= numeros)){
-            for(int i = siguiente_combinacion.length-1; i >= 0; i--){
-                if(siguiente_combinacion[i] < numeros-(siguiente_combinacion.length-(i+1))){
-                    siguiente_combinacion[i] += 1;
-                    for(int j = i+1; j < siguiente_combinacion.length; j++){
-                        siguiente_combinacion[j] = (byte) (siguiente_combinacion[i]+j-i);
-                    }
-                    return siguiente_combinacion;
-                }
-            }
-            return siguiente_combinacion;
+    // 
+    
+    public int sumar_indices_combinacion_sin_repeticion(String cadena, int[] indices_a_sumar){
+        if(indice_inicial_subcadena(cadena) == 1){
+            return indices_a_sumar[ultimo_numero_cadena(cadena)-1];
         }else{
-            for(int i = 0; i < siguiente_combinacion.length; i++){
-                siguiente_combinacion[i] = (byte) (i+1);
-            }
-            return siguiente_combinacion;
+            return indices_a_sumar[ultimo_numero_cadena(cadena)-1] + sumar_indices_combinacion_sin_repeticion(cadena.substring(0, indice_inicial_subcadena(cadena)-1), indices_a_sumar);
         }
     }
     
-    // Verifica si en un arreglo se cumple que los elementos van de menor a mayor desde el indice 0
-
-    static boolean verificar_orden_arreglo_menor_a_mayor(byte[] arreglo_numeros){
-        for (int i = 0; i < arreglo_numeros.length-1; i++) {
-            if(arreglo_numeros[i] > arreglo_numeros[i+1]){
-                return false;
-            }
+    // Genera todas las combinaciones sin repeticion de una cantidad de numeros elegidos
+    
+    public void combinaciones_sin_repeticion_numeros_elegidos(int numeros, int numeros_elegidos, int indice_matriz){
+        matriz_suma_indices[indice_matriz] = new int[(int)combinacion_sin_repeticion(numeros, numeros_elegidos)];
+        matriz_combinaciones_sin_repeticion[indice_matriz] = new String[(int)combinacion_sin_repeticion(numeros, numeros_elegidos)];
+        matriz_combinaciones_sin_repeticion[indice_matriz][0] = ".1";
+        for (int i = 2; i <= numeros_elegidos; i++) {
+            matriz_combinaciones_sin_repeticion[indice_matriz][0] += ("." + i);
         }
-        return true;
+        for (int i = 1; i < matriz_combinaciones_sin_repeticion[indice_matriz].length; i++) {
+            matriz_combinaciones_sin_repeticion[indice_matriz][i] = siguiente_combinacion_sin_repeticion(matriz_combinaciones_sin_repeticion[indice_matriz][i-1], numeros);
+        }
+    }
+    
+    // Devuelve la siguiente combinacion sin repeticion
+            
+    public String siguiente_combinacion_sin_repeticion(String cadena, int numeros_combinados){
+        if(ultimo_numero_cadena(cadena) < numeros_combinados){
+            cadena = cadena.substring(0, indice_inicial_subcadena(cadena)) + (ultimo_numero_cadena(cadena)+1);
+            return cadena;
+        }else{
+            cadena = siguiente_combinacion_sin_repeticion(cadena.substring(0, indice_inicial_subcadena(cadena)-1), numeros_combinados-1);
+            return cadena + '.'  + (ultimo_numero_cadena(cadena)+1);
+        }
+    }
+    
+    // Devuelve el ultimo numero de una cadena de caracteres
+    
+    public int ultimo_numero_cadena(String cadena){
+        return Integer.parseInt(cadena.substring(indice_inicial_subcadena(cadena), cadena.length()));
+    }
+    
+    // Indica cual es el indice del primer numero de derecha a izquierda
+    
+    public int indice_inicial_subcadena(String subcadena){
+        if(subcadena.charAt(subcadena.length()-1) == '.'){
+            return subcadena.length();
+        }else{
+            return indice_inicial_subcadena(subcadena.substring(0, subcadena.length()-1));
+        }
     }
     
     // Numero de combinaciones sin repeticion de un conjunto de n numeros con n elegidos
 
-    static double combinacion_sin_repeticion(int numeros, int numeros_elegidos){
+    public double combinacion_sin_repeticion(int numeros, int numeros_elegidos){
         return permutacion_sin_repeticion(numeros, numeros_elegidos) / factorial(numeros_elegidos);
     }
     
     // Numero de permutaciones sin repeticion de un conjunto de n numeros con n elegidos
 
-    static double permutacion_sin_repeticion(int numeros, int numeros_elegidos){
+    public double permutacion_sin_repeticion(int numeros, int numeros_elegidos){
         if((numeros_elegidos < 1) || (numeros_elegidos > numeros) || (numeros < 1)){
             return 1;
         }else{
@@ -84,7 +104,7 @@ public class Combinatoria {
     
     // Factorial de un numero
 
-    static double factorial(int numero){
+    public double factorial(int numero){
         if(numero < 2){
             return 1;
         }else{
@@ -94,12 +114,20 @@ public class Combinatoria {
     
     // Getters and Setters
 
-    public byte[][] getCombinaciones_sin_repeticion() {
-        return combinaciones_sin_repeticion;
+    public String[][] getMatriz_combinaciones_sin_repeticion() {
+        return matriz_combinaciones_sin_repeticion;
     }
 
-    public void setCombinaciones_sin_repeticion(byte[][] combinaciones_sin_repeticion) {
-        this.combinaciones_sin_repeticion = combinaciones_sin_repeticion;
+    public void setMatriz_combinaciones_sin_repeticion(String[][] matriz_combinaciones_sin_repeticion) {
+        this.matriz_combinaciones_sin_repeticion = matriz_combinaciones_sin_repeticion;
+    }
+
+    public int[][] getMatriz_suma_indices() {
+        return matriz_suma_indices;
+    }
+
+    public void setMatriz_suma_indices(int[][] matriz_suma_indices) {
+        this.matriz_suma_indices = matriz_suma_indices;
     }
 
 }

@@ -162,17 +162,9 @@ public class Representante implements Comparable<Representante> {
             simulacion_casos_dia[cantidad_casos] = 19200 - suma_tiempos_simulacion;
             cantidad_casos ++;
         }
-        //
-        Combinatoria[] indices_simulacion = new Combinatoria[simulacion_casos_dia.length-1];
-        int[][] matriz_simulacion = new int[simulacion_casos_dia.length-1][];
-        int[] suma_indices_fila;
-        for (int i = 1; i < simulacion_casos_dia.length; i++) {
-            indices_simulacion[i-1] = new Combinatoria((byte) simulacion_casos_dia.length, i);
-            suma_indices_fila = sumar_indices_simulacion(simulacion_casos_dia, indices_simulacion[i-1].getCombinaciones_sin_repeticion());
-            matriz_simulacion[i-1] = suma_indices_fila;
-        }
+        Combinatoria matriz_suma_simulacion = new Combinatoria(simulacion_casos_dia.length, simulacion_casos_dia);
         double probabilidad = 0;
-        for (int[] simulacion : matriz_simulacion) {
+        for (int[] simulacion : matriz_suma_simulacion.getMatriz_suma_indices()) {
             for (int suma_combinacion_sin_repeticion : simulacion) {
                 probabilidad = 1.0 / simulacion.length;
                 calcular_probabilidad_salida_rango(suma_combinacion_sin_repeticion, probabilidad);
@@ -200,19 +192,6 @@ public class Representante implements Comparable<Representante> {
         }
         if(suma_tiempos_simulacion < 19200) cantidad_casos ++;
         return cantidad_casos;
-    }
-    
-    // Devuelve la suma de los valores de una lista de todas las posiciones indicadas en un arreglo de enteros
-    
-    public int[] sumar_indices_simulacion(int[] simulacion_tiempos_dia, byte[][] combinaciones_sin_repeticion){
-        int[] suma_indices_fila = new int[combinaciones_sin_repeticion.length];
-        for (int i = 0; i < combinaciones_sin_repeticion.length; i++) {
-            for (int j = 0; j < combinaciones_sin_repeticion[i].length; j++) {
-                suma_indices_fila[i] += simulacion_tiempos_dia[combinaciones_sin_repeticion[i][j]-1];
-            }
-        }
-        Arrays.sort(suma_indices_fila);
-        return suma_indices_fila;
     }
     
     // Asigna la probabilidad al rango de la jornada al que pertence el cierre de un caso
