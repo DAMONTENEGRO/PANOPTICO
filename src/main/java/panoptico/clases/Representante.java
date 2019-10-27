@@ -21,6 +21,7 @@ public class Representante implements Comparable<Representante> {
     private ArrayList<Date> dias_trabajo; // Arreglo dinamico con todas las fechas en las que ha trabajado el representante
     private ArrayList<Proceso> procesos; // Arreglo dinamico con todos los procesos que ha atendido el representante
     private boolean representativo; // Define si el representante es representativo o no
+    private Combinatoria matriz_suma_indices_simulacion; // Es una matriz con la suma de todos los indices de cada simulacion
     private double[] simulacion_dia; // Son las probabilidades que existen de que se cierre un caso en un rango de tiempo definido por el usuario
     
     // Constructor
@@ -162,9 +163,9 @@ public class Representante implements Comparable<Representante> {
             simulacion_casos_dia[cantidad_casos] = 19200 - suma_tiempos_simulacion;
             cantidad_casos ++;
         }
-        Combinatoria matriz_suma_simulacion = new Combinatoria(simulacion_casos_dia.length, simulacion_casos_dia);
+        matriz_suma_indices_simulacion = new Combinatoria(simulacion_casos_dia);
         double probabilidad = 0;
-        for (int[] simulacion : matriz_suma_simulacion.getMatriz_suma_indices()) {
+        for (int[] simulacion : matriz_suma_indices_simulacion.getMatriz_suma_indices()) {
             for (int suma_combinacion_sin_repeticion : simulacion) {
                 probabilidad = 1.0 / simulacion.length;
                 calcular_probabilidad_salida_rango(suma_combinacion_sin_repeticion, probabilidad);
@@ -262,6 +263,14 @@ public class Representante implements Comparable<Representante> {
 
     public void setSimulacion_dia(double[] simulacion_dia) {
         this.simulacion_dia = simulacion_dia;
+    }
+
+    public Combinatoria getMatriz_suma_indices_simulacion() {
+        return matriz_suma_indices_simulacion;
+    }
+
+    public void setMatriz_suma_indices_simulacion(Combinatoria matriz_suma_indices_simulacion) {
+        this.matriz_suma_indices_simulacion = matriz_suma_indices_simulacion;
     }
     
 
