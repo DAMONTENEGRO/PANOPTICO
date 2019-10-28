@@ -2,6 +2,7 @@
 package panoptico.clases;
 
 import java.io.IOException;
+import java.text.ParseException;
 import javax.swing.JOptionPane;
 
 /**
@@ -11,10 +12,11 @@ import javax.swing.JOptionPane;
  **/
 public class Principal {
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws ParseException, IOException{
         
         try{
-            Equipo chat = new Equipo("TMC MES.xlsx", 95, 90, 5, 95, 95, 25);
+            Equipo chat = new Equipo("TMC REDUCIDO.xlsx", 95, 90, 5, 95, 95, 25);
+            
             chat.getRepresentantes().get(1).simular_dia_representante(1);
             
             for(int i = 0; i < chat.getRepresentantes().get(1).getSimulacion_dia().length; i++){

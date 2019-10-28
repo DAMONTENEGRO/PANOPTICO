@@ -66,7 +66,7 @@ public final class Equipo {
                 representantes.get(i).setRepresentativo(true);
                 representantes.get(i).organizar_representante(representatividad_procesos, percentil_inferior_promedios, percentil_superior_promedios, percentil_tiempo_preparacion);
             } else {
-                representantes.get(i).eliminar_datos_representante();
+                //representantes.get(i).eliminar_datos_representante();
             }
         }
         //simular_dia_representantes();
@@ -75,16 +75,10 @@ public final class Equipo {
     // Agrega un caso a un representante en especifico, sino existe lo crea y lo asigna
     
     public void agregar_caso_representante(int duracion, Date fecha, int id, String nombre_proceso, String nombre_representante, String skill){
-        if(!existe_representante(nombre_representante)){
-            representantes.add(new Representante(nombre_representante, skill));
-        }
-        if(!dias_trabajo.contains(fecha)){
-            dias_trabajo.add(fecha);
-        }
+        if(!existe_representante(nombre_representante)) representantes.add(new Representante(nombre_representante, skill));
+        if(!dias_trabajo.contains(fecha)) dias_trabajo.add(fecha);
         for (int i = 0; i < representantes.size(); i++) {
-            if(representantes.get(i).getNombre_usuario().equals(nombre_representante)){
-                representantes.get(i).agregar_caso_proceso(duracion, fecha, id, nombre_proceso);
-            }
+            if(representantes.get(i).getNombre_usuario().equals(nombre_representante)) representantes.get(i).agregar_caso_proceso(duracion, fecha, id, nombre_proceso);
         }
     }
     
@@ -92,9 +86,7 @@ public final class Equipo {
     
     public boolean existe_representante(String nombre_representante){
         for(int i = 0; i < representantes.size(); i++){
-            if(representantes.get(i).getNombre_usuario().equals(nombre_representante)){
-                return true;
-            }
+            if(representantes.get(i).getNombre_usuario().equals(nombre_representante)) return true;
         }
         return false;
     }
@@ -104,10 +96,11 @@ public final class Equipo {
     public void simular_dia_representantes(){
         int numero_representantes_representativos = 0;
         simulacion_dia_equipo = new double[320];
+        double[] simulacion_dia_representante;
         for (int i = 0; i < representantes.size(); i++) {
             if(representantes.get(i).isRepresentativo()){
                 representantes.get(i).simular_dia_representante(1);
-                double[] simulacion_dia_representante = representantes.get(i).getSimulacion_dia();
+                simulacion_dia_representante = representantes.get(i).getSimulacion_dia();
                 for (int j = 0; j < simulacion_dia_equipo.length; j++) {
                     simulacion_dia_equipo[j] += simulacion_dia_representante[j];
                 }

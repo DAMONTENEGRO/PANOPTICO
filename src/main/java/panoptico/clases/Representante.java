@@ -41,16 +41,10 @@ public class Representante implements Comparable<Representante> {
     // Agrega un caso a un proceso especifico del representante a partir de su nombre
     
     public void agregar_caso_proceso(int duracion, Date fecha, int id, String nombre_proceso){
-        if(!existe_proceso(nombre_proceso)){
-            procesos.add(new Proceso(nombre_proceso));
-        }
-        if(!dias_trabajo.contains(fecha)){
-            dias_trabajo.add(fecha);
-        }
+        if(!existe_proceso(nombre_proceso)) procesos.add(new Proceso(nombre_proceso));
+        if(!dias_trabajo.contains(fecha)) dias_trabajo.add(fecha);
         for (int i = 0; i < procesos.size(); i++) {
-            if(procesos.get(i).getNombre_proceso().equals(nombre_proceso)){
-                procesos.get(i).agregar_caso(duracion, fecha, id);
-            }
+            if(procesos.get(i).getNombre_proceso().equals(nombre_proceso)) procesos.get(i).agregar_caso(duracion, fecha, id);
         }
     }
     
@@ -58,9 +52,7 @@ public class Representante implements Comparable<Representante> {
     
     public boolean existe_proceso(String nombre_proceso){
         for(int i = 0; i < procesos.size(); i++){
-            if(procesos.get(i).getNombre_proceso().equals(nombre_proceso)){
-                return true;
-            }
+            if(procesos.get(i).getNombre_proceso().equals(nombre_proceso)) return true;
         }
         return false;
     }
@@ -171,6 +163,7 @@ public class Representante implements Comparable<Representante> {
                 calcular_probabilidad_salida_rango(suma_combinacion_sin_repeticion, probabilidad);
             }
         }
+        //matriz_suma_indices_simulacion.eliminar_datos_combinatoria();
     }
     
     // Devuelve el numero de casos que que se simulan en un dia
@@ -206,6 +199,22 @@ public class Representante implements Comparable<Representante> {
             }
         }
     }
+    
+    /*
+    // Imprime los datos de la simulacion dia en un excel
+    
+    public void imprimir_simulacion_representante() throws FileNotFoundException, IOException{
+        XSSFWorkbook libro = new XSSFWorkbook();
+        XSSFSheet hoja = libro.createSheet("Simulaciones");
+        System.out.println("Creating excel");
+        Row fila = hoja.createRow(1);
+        Cell celda = fila.createCell(1);
+        celda.setCellValue("SI FUNCIONA");
+        try (FileOutputStream outputStream = new FileOutputStream("TMC MES.xlsx")) {
+            libro.write(outputStream);
+        }
+    }
+    */
     
     // Getters and Setters
 

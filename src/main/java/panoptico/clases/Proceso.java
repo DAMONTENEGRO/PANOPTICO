@@ -122,9 +122,7 @@ public class Proceso implements Comparable<Proceso>{
     
     public boolean existe_caso_fecha(Date fecha) {
         for (int i = 0; i < casos.size(); i++) {
-            if (casos.get(i).getFecha().compareTo(fecha) == 0) {
-                return true;
-            }
+            if (casos.get(i).getFecha().compareTo(fecha) == 0) return true;
         }
         return false;
     }

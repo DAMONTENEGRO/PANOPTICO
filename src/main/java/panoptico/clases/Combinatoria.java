@@ -24,32 +24,19 @@ public class Combinatoria {
         llenar_matriz_suma_indices(indices_a_sumar);
     }
     
-    // Devuelve la suma de los valores de una lista de todas las posiciones indicadas en un arreglo de enteros
-   
-    public void llenar_matriz_suma_indices(int[] indices_a_sumar){
-        for (int i = 0; i < matriz_combinaciones_sin_repeticion.length; i++) {
-            for (int j = 0; j < matriz_combinaciones_sin_repeticion[i].length; j++) {
-                matriz_suma_indices[i][j] = sumar_indices_combinacion_sin_repeticion(matriz_combinaciones_sin_repeticion[i][j] , indices_a_sumar);
-            }
-        }
-    }
+    // Elimina los datos de las matrices
     
-    //
-   
-    public int sumar_indices_combinacion_sin_repeticion(String cadena, int[] indices_a_sumar){
-        if(indice_inicial_subcadena(cadena) == 1){
-            return indices_a_sumar[ultimo_numero_cadena(cadena)-1];
-        }else{
-            return indices_a_sumar[ultimo_numero_cadena(cadena)-1] + sumar_indices_combinacion_sin_repeticion(cadena.substring(0, indice_inicial_subcadena(cadena)-1), indices_a_sumar);
-        }
+    public void eliminar_datos_combinatoria(){
+        matriz_combinaciones_sin_repeticion = new String[0][0];
+        matriz_suma_indices = new int[0][0];
     }
     
     // Genera todas las combinaciones sin repeticion de una cantidad de numeros elegidos
    
     public void combinaciones_sin_repeticion_numeros_elegidos(int numeros, int numeros_elegidos, int indice_matriz){
-        matriz_suma_indices[indice_matriz] = new int[(int)combinacion_sin_repeticion(numeros, numeros_elegidos)];
         matriz_combinaciones_sin_repeticion[indice_matriz] = new String[(int)combinacion_sin_repeticion(numeros, numeros_elegidos)];
         matriz_combinaciones_sin_repeticion[indice_matriz][0] = ".1";
+        matriz_suma_indices[indice_matriz] = new int[(int)combinacion_sin_repeticion(numeros, numeros_elegidos)];
         for (int i = 2; i <= numeros_elegidos; i++) {
             matriz_combinaciones_sin_repeticion[indice_matriz][0] += ("." + i);
         }
@@ -109,6 +96,26 @@ public class Combinatoria {
             return 1;
         }else{
             return numero * factorial(numero-1);
+        }
+    }
+    
+    // Llena la matriz que tiene la suma de todos los indices
+   
+    public void llenar_matriz_suma_indices(int[] indices_a_sumar){
+        for (int i = 0; i < matriz_combinaciones_sin_repeticion.length; i++) {
+            for (int j = 0; j < matriz_combinaciones_sin_repeticion[i].length; j++) {
+                matriz_suma_indices[i][j] = sumar_indices_combinacion_sin_repeticion(matriz_combinaciones_sin_repeticion[i][j] , indices_a_sumar);
+            }
+        }
+    }
+    
+    // Devuelve la suma de los valores de una lista de todas las posiciones indicadas en un arreglo de enteros
+   
+    public int sumar_indices_combinacion_sin_repeticion(String cadena, int[] indices_a_sumar){
+        if(indice_inicial_subcadena(cadena) == 1){
+            return indices_a_sumar[ultimo_numero_cadena(cadena)-1];
+        }else{
+            return indices_a_sumar[ultimo_numero_cadena(cadena)-1] + sumar_indices_combinacion_sin_repeticion(cadena.substring(0, indice_inicial_subcadena(cadena)-1), indices_a_sumar);
         }
     }
     
