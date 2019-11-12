@@ -78,11 +78,7 @@ public class VentanaBienvenida extends JFrame implements ActionListener, Runnabl
 
     @Override
     public void run() {
-        try{
-            Equipo chat = new Equipo("TMC MES.xlsx", 95, 90, 5, 95, 95, 25);
-        }catch(IOException e){
-            JOptionPane.showMessageDialog(null, "La base de datos del programa no existe o es inaccesible", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        
     }
     
 }
