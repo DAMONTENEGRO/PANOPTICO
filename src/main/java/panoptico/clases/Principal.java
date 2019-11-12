@@ -15,7 +15,7 @@ public class Principal {
     public static void main(String[] args) throws IOException {
         Equipo chat = new Equipo(120, 25, 95);
         int[] i = {2, 3};
-        HashMap mapita = chat.filtrar_mapa_busqueda(chat.getCasos(), i);
+        //HashMap mapita = chat.filtrar_mapa_busqueda(chat.getCasos(), i);
         
        /*
         for (Object llave : mapita.keySet()) {
