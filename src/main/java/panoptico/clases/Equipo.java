@@ -51,7 +51,7 @@ public class Equipo {
     // Aplica los filtros indicados al mapa de busqueda
     
     public void generar_mapa_busqueda(int[] filtros){
-        
+        mapa_busqueda = filtrar_mapa_busqueda(casos, filtros);
     }
     
     // Retorna un mapa de busqueda con varios filtros
@@ -59,19 +59,12 @@ public class Equipo {
     public HashMap filtrar_mapa_busqueda(ArrayList<Caso> arreglo, int[] filtros){
         HashMap mapa_filtrado = crear_mapa_busqueda(arreglo, filtros[0]);
         if(filtros.length == 1){
-            for (Object llave : mapa_filtrado.keySet()) {
-                ArrayList<Caso> arreglo_filtro = (ArrayList<Caso>) mapa_filtrado.get(llave);
-                mostrar_arreglo_consola(arreglo_filtro);
-            }
             return mapa_filtrado;
         }else{
             int[] nuevos_filtros = new int[filtros.length-1];
             System.arraycopy(filtros, 1, nuevos_filtros, 0, filtros.length - 1);   
-            ArrayList<Caso> arreglo_filtro = new ArrayList<>();
             for (Object llave : mapa_filtrado.keySet()) {
-                arreglo_filtro = (ArrayList<Caso>) mapa_filtrado.get(llave);
-                //mostrar_arreglo_consola(arreglo_filtro);
-                mapa_filtrado.put(llave, filtrar_mapa_busqueda(arreglo_filtro, nuevos_filtros));
+                mapa_filtrado.put(llave, filtrar_mapa_busqueda((ArrayList<Caso>) mapa_filtrado.get(llave), nuevos_filtros));
             }
             return mapa_filtrado;
         }
@@ -82,7 +75,7 @@ public class Equipo {
     public HashMap crear_mapa_busqueda(ArrayList<Caso> arreglo, int numero_columna_llave){
         HashMap<Object, ArrayList<Caso>> mapa_filtrado = new HashMap<>();
         Object llave = null;
-        for (Caso caso : casos) {
+        for (Caso caso : arreglo) {
             llave = objeto_filtro(numero_columna_llave, caso);
             if(mapa_filtrado.containsKey(llave)){
                 mapa_filtrado.get(llave).add(caso);
