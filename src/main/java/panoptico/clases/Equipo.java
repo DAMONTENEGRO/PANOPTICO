@@ -23,13 +23,13 @@ public class Equipo {
     // Atributos
     
     private ArrayList<Caso> casos; // Es un arreglo dinamico que contiene todos los casos
-    private HashMap mapa_busqueda; // Es el mapa de busqueda del programa
-    private double tiempo_futuro_estado; // Es el tiempo necesario para desencolar las consultas
+    private HashMap mapa_busqueda; // Es el mapa de busqueda del programa para los datos
+    private HashMap glosario_busquedas; // Es el mapa de busqueda del programa para los resultados
     private double[] simulacion_jornada; // Son las probabilidades que existen de que se cierre un caso en el rango de un minuto
 
     // Constructor
     
-    public Equipo(int tiempo_minimo, double porcentaje_dias_trabajo, double percentil_tiempo_descanso) throws FileNotFoundException, IOException {
+    public Equipo(int tiempo_minimo, double percentil_tiempo_futuro_estado) throws FileNotFoundException, IOException {
         FileInputStream archivo = new FileInputStream(new File("Base de datos.xlsx"));
         Workbook documento_excel = new XSSFWorkbook(archivo);
         Sheet hoja = documento_excel.getSheetAt(0);
@@ -41,12 +41,24 @@ public class Equipo {
         }
         documento_excel.close();
         archivo.close();
+        //casos.removeIf(caso -> esta_incompleto(caso));
         mapa_busqueda = new HashMap<>();
-        //eliminar_no_representativos(porcentaje_dias_trabajo);
-        //calcular_tiempo_futuro_estado(percentil_tiempo_descanso);
+        glosario_busquedas = new HashMap<>();
+        calcular_tiempo_futuro_estado(percentil_tiempo_futuro_estado);
     }
 
     // Metodos
+    
+    // Verifica si el caso tiene celdas vacias o datos faltantes
+    
+    public boolean esta_incompleto(Caso caso){
+        if(caso.getSkill().equals("")) return true;
+        if(caso.getNombre_usuario().equals("")) return true;
+        if(caso.getProceso().equals("")) return true;
+        if(caso.getTl().equals("")) return true;
+        if(caso.getTurno().equals("")) return true;
+        return false;
+    }
     
     // Aplica los filtros indicados al mapa de busqueda
     
@@ -85,6 +97,7 @@ public class Equipo {
                 mapa_filtrado.put(llave, lista_filtrada);
             }
         }
+        if(arreglo.equals(casos)) glosario_busquedas.put(("elementos columna " + numero_columna_llave), mapa_filtrado.size());
         return mapa_filtrado;
     }
     
@@ -108,6 +121,88 @@ public class Equipo {
         return null;
     }
     
+    // Calcula el tiempo necesario para desencolar
+    
+    public void calcular_tiempo_futuro_estado(double percentil_tiempo_futuro_estado){
+        int[] filtros = {8, 7, 2, 4};
+        generar_mapa_busqueda(filtros);
+        ArrayList<Double> turno = new ArrayList<>();
+        ArrayList<Double> tl = new ArrayList<>();
+        ArrayList<Double> nombre_usuario = new ArrayList<>();
+        ArrayList<Double> fecha = new ArrayList<>(); 
+        double valor = 0;
+        for (Object a : mapa_busqueda.keySet()) {
+            for (Object b : ((HashMap) mapa_busqueda.get(a)).keySet()) {
+                for (Object c : ((HashMap) ((HashMap) mapa_busqueda.get(a)).get(b)).keySet()) {
+                    for (Object d : ((HashMap) ((HashMap) ((HashMap) mapa_busqueda.get(a)).get(b)).get(c)).keySet()) {
+                        fecha.add(calcular_promedio_duracion((ArrayList<Caso>) ((HashMap)((HashMap)((HashMap)mapa_busqueda.get(a)).get(b)).get(c)).get(d)));
+                    }
+                    valor = calcular_percentil_arreglo_double(percentil_tiempo_futuro_estado, fecha);
+                    nombre_usuario.add(valor);
+                    glosario_busquedas.put(("tiempo futuro estado " + c), valor);
+                }
+                valor = calcular_promedio_double(nombre_usuario);
+                tl.add(valor);
+                glosario_busquedas.put(("tiempo futuro estado " + b), valor);
+            }
+            valor = calcular_promedio_double(tl);
+            turno.add(valor);
+            glosario_busquedas.put(("tiempo futuro estado " + a), valor);
+        }
+        glosario_busquedas.put("tiempo futuro estado equipo", calcular_promedio_double(turno));
+    }
+    
+    // Calcula el tiempo promedio en una fecha especifica
+    
+    public double calcular_promedio_duracion(ArrayList<Caso> arreglo){
+        double suma = 0;
+        for (Caso caso : arreglo) {
+            suma += caso.getDuracion();
+        }
+        return suma/arreglo.size();
+    }
+    
+    // Calcula el promedio de un arreglo de double
+    
+    public double calcular_promedio_double(ArrayList<Double> arreglo){
+        double suma = 0;
+        for (Double numero : arreglo) {
+            suma += numero;
+        }
+        return suma/arreglo.size();
+    }
+    
+    // Calcula un percentil en un arreglo de doubles ordenado
+    
+    public double calcular_percentil_arreglo_double(double percentil, ArrayList<Double> arreglo){
+        Collections.sort(arreglo);
+        double posicion_percentil = arreglo.size() * (percentil / 100);
+        if((posicion_percentil % 1) != 0){
+            return arreglo.get((int) posicion_percentil);
+        }else{
+            return (arreglo.get((int) posicion_percentil) + arreglo.get((int) posicion_percentil-1))/2;
+        }
+    }
+    
+    /*
+    
+    
+    /*
+    // Calcula el tiempo necesario para desencolar
+    
+    public void calcular_tiempo_futuro_estado(double percentil_tiempo_descanso){
+        ArrayList<Double> lista_percentiles_representantes = new ArrayList<>();
+        ArrayList<Double> lista_percentiles_fechas = new ArrayList<>();
+        for (Object representante : mapa_busqueda.keySet()) {
+            lista_percentiles_fechas.clear();
+            for (Object fecha : mapa_busqueda.get(representante).keySet()) {
+                lista_percentiles_fechas.add(calcular_promedio_fecha(mapa_busqueda.get(representante).get(fecha)));
+            }
+            lista_percentiles_representantes.add(calcular_percentil_arreglo_double(percentil_tiempo_descanso, lista_percentiles_fechas));
+        }
+        tiempo_futuro_estado = calcular_promedio_double(lista_percentiles_representantes);
+    }
+    
     /*
     // Elimina los representantes que no cumplen con un porcentaje minimo de dias trabajados
     
@@ -116,7 +211,7 @@ public class Equipo {
         mapa_busqueda.values().removeIf(representante -> representante.size() < dias_trabajados*(porcentaje_dias_trabajo/100));
         convertir_mapa_en_arreglo_original();
     }
-*/
+
     /*
     // Convierte el mapa actual en arreglo de casos original
     
@@ -171,52 +266,9 @@ public class Equipo {
     
     
     /*
-    // Calcula el tiempo necesario para desencolar
     
-    public void calcular_tiempo_futuro_estado(double percentil_tiempo_descanso){
-        ArrayList<Double> lista_percentiles_representantes = new ArrayList<>();
-        ArrayList<Double> lista_percentiles_fechas = new ArrayList<>();
-        for (Object representante : mapa_busqueda.keySet()) {
-            lista_percentiles_fechas.clear();
-            for (Object fecha : mapa_busqueda.get(representante).keySet()) {
-                lista_percentiles_fechas.add(calcular_promedio_fecha(mapa_busqueda.get(representante).get(fecha)));
-            }
-            lista_percentiles_representantes.add(calcular_percentil_arreglo_double(percentil_tiempo_descanso, lista_percentiles_fechas));
-        }
-        tiempo_futuro_estado = calcular_promedio_double(lista_percentiles_representantes);
-    }
     
-    // Calcula el tiempo promedio en una fecha especifica
     
-    public double calcular_promedio_fecha(ArrayList<Caso> arreglo){
-        double suma = 0;
-        for (Caso caso : arreglo) {
-            suma += caso.getDuracion();
-        }
-        return suma/arreglo.size();
-    }
-    
-    // Calcula el promedio de un arreglo de double
-    
-    public double calcular_promedio_double(ArrayList<Double> arreglo){
-        double suma = 0;
-        for (Double numero : arreglo) {
-            suma += numero;
-        }
-        return suma/arreglo.size();
-    }
-    
-    // Calcula un percentil en un arreglo de doubles ordenado
-    
-    public double calcular_percentil_arreglo_double(double percentil, ArrayList<Double> arreglo){
-        Collections.sort(arreglo);
-        double posicion_percentil = arreglo.size() * (percentil / 100);
-        if((posicion_percentil % 1) != 0){
-            return arreglo.get((int) posicion_percentil);
-        }else{
-            return (arreglo.get((int) posicion_percentil) + arreglo.get((int) posicion_percentil-1))/2;
-        }
-    }
     
     // Simula una jornada laboral minuto a minuto
     
@@ -331,12 +383,12 @@ public class Equipo {
         this.mapa_busqueda = mapa_busqueda;
     }
 
-    public double getTiempo_futuro_estado() {
-        return tiempo_futuro_estado;
+    public HashMap<String, Double> getGlosario_busquedas() {
+        return glosario_busquedas;
     }
 
-    public void setTiempo_futuro_estado(double tiempo_futuro_estado) {
-        this.tiempo_futuro_estado = tiempo_futuro_estado;
+    public void setGlosario_busquedas(HashMap<String, Double> glosario_busquedas) {
+        this.glosario_busquedas = glosario_busquedas;
     }
 
     public double[] getSimulacion_jornada() {
