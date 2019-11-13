@@ -19,6 +19,22 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * @author montenegro
  */
 public class Equipo {
+    
+    public class Contenedor implements Comparable<Contenedor>{
+        String nombre;
+        double dato;
+
+        @Override
+        public int compareTo(Contenedor contenedor) {
+            if(dato > contenedor.dato){
+                return -1;
+            }else if(dato < contenedor.dato){
+                return 1;
+            }else{
+                return 0;
+            }
+        }
+    }
 
     // Atributos
     
@@ -41,10 +57,11 @@ public class Equipo {
         }
         documento_excel.close();
         archivo.close();
-        //casos.removeIf(caso -> esta_incompleto(caso));
+        casos.removeIf(caso -> esta_incompleto(caso));
         mapa_busqueda = new HashMap<>();
         glosario_busquedas = new HashMap<>();
-        calcular_tiempo_futuro_estado(percentil_tiempo_futuro_estado);
+        //aqui
+        //calcular_tiempo_futuro_estado(percentil_tiempo_futuro_estado);
     }
 
     // Metodos
@@ -58,6 +75,20 @@ public class Equipo {
         if(caso.getTl().equals("")) return true;
         if(caso.getTurno().equals("")) return true;
         return false;
+    }
+    
+    // Elimina los valores que no son representativos
+    
+    public void eliminar_no_representativos(double representatividad_representante, double percentil_procesos){
+        int[][] filtros = {{4},{2,4}};
+        generar_mapa_busqueda(filtros[0]);
+        double numero = mapa_busqueda.size()*(representatividad_representante/100);
+        generar_mapa_busqueda(filtros[1]);
+        for (Object representante : mapa_busqueda.keySet()) {
+            if(((HashMap) mapa_busqueda.get(representante)).size() < numero){
+                System.out.println(representante + " : " + ((HashMap) mapa_busqueda.get(representante)).size());
+            }
+        }
     }
     
     // Aplica los filtros indicados al mapa de busqueda
@@ -182,6 +213,21 @@ public class Equipo {
         }else{
             return (arreglo.get((int) posicion_percentil) + arreglo.get((int) posicion_percentil-1))/2;
         }
+    }
+    
+    // Simula una jornada minuto a minuto
+    
+    public void simular_jornada(double percentil_procesos){
+        int[] filtros = {8, 3};
+        generar_mapa_busqueda(filtros);
+        ArrayList<Double> turno = new ArrayList<>();
+        ArrayList<Double> proceso = new ArrayList<>();
+        for (Object a : mapa_busqueda.keySet()) {
+            for (Object b : ((HashMap) mapa_busqueda.get(a)).keySet()) {
+                
+            }
+        }
+   
     }
     
     /*
