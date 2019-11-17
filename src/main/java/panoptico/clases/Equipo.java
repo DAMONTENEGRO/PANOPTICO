@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -21,8 +20,13 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class Equipo {
     
     public class Contenedor implements Comparable<Contenedor>{
-        String nombre;
+        Object nombre;
         double dato;
+
+        public Contenedor(Object nombre, double dato) {
+            this.nombre = nombre;
+            this.dato = dato;
+        }
 
         @Override
         public int compareTo(Contenedor contenedor) {
@@ -41,11 +45,10 @@ public class Equipo {
     private ArrayList<Caso> casos; // Es un arreglo dinamico que contiene todos los casos
     private HashMap mapa_busqueda; // Es el mapa de busqueda del programa para los datos
     private HashMap glosario_busquedas; // Es el mapa de busqueda del programa para los resultados
-    private double[] simulacion_jornada; // Son las probabilidades que existen de que se cierre un caso en el rango de un minuto
-
+    
     // Constructor
     
-    public Equipo(int tiempo_minimo, double percentil_tiempo_futuro_estado) throws FileNotFoundException, IOException {
+    public Equipo(int tiempo_minimo, double representatividad_representante, double percentil_tiempo_futuro_estado, double percentil_procesos, double inferior, double superior) throws FileNotFoundException, IOException {
         FileInputStream archivo = new FileInputStream(new File("Base de datos.xlsx"));
         Workbook documento_excel = new XSSFWorkbook(archivo);
         Sheet hoja = documento_excel.getSheetAt(0);
@@ -60,8 +63,8 @@ public class Equipo {
         casos.removeIf(caso -> esta_incompleto(caso));
         mapa_busqueda = new HashMap<>();
         glosario_busquedas = new HashMap<>();
-        //aqui
-        //calcular_tiempo_futuro_estado(percentil_tiempo_futuro_estado);
+        eliminar_no_representativos(representatividad_representante, percentil_tiempo_futuro_estado, percentil_procesos);
+        simular_jornada(inferior, superior);
     }
 
     // Metodos
@@ -79,16 +82,34 @@ public class Equipo {
     
     // Elimina los valores que no son representativos
     
-    public void eliminar_no_representativos(double representatividad_representante, double percentil_procesos){
-        int[][] filtros = {{4},{2,4}};
+    public void eliminar_no_representativos(double representatividad_representante, double percentil_tiempo_futuro_estado, double percentil_procesos){
+        int[][] filtros = {{4}, {2,4}, {3}};
         generar_mapa_busqueda(filtros[0]);
-        double numero = mapa_busqueda.size()*(representatividad_representante/100);
+        double casos_minimos = mapa_busqueda.size()*(representatividad_representante/100);
         generar_mapa_busqueda(filtros[1]);
+        ArrayList<Object> no_representativos = new ArrayList<>();
         for (Object representante : mapa_busqueda.keySet()) {
-            if(((HashMap) mapa_busqueda.get(representante)).size() < numero){
-                System.out.println(representante + " : " + ((HashMap) mapa_busqueda.get(representante)).size());
+            if(((HashMap) mapa_busqueda.get(representante)).size() < casos_minimos){
+                no_representativos.add(representante);
             }
         }
+        casos.removeIf(caso -> no_representativos.contains(caso.getNombre_usuario()));
+        calcular_tiempo_futuro_estado(percentil_procesos);
+        no_representativos.clear();
+        int suma_representatividad = 0;
+        generar_mapa_busqueda(filtros[2]);
+        ArrayList<Contenedor> contenedores = new ArrayList<>();
+        for (Object proceso : mapa_busqueda.keySet()) {
+            contenedores.add(new Contenedor(proceso, ((ArrayList<Caso>) mapa_busqueda.get(proceso)).size()));
+        }
+        Collections.sort(contenedores);
+        for (Contenedor contenedor : contenedores) {
+            if(suma_representatividad > casos.size()*(percentil_procesos/100)){
+                no_representativos.add(contenedor.nombre);
+            }
+            suma_representatividad += contenedor.dato;
+        }
+        casos.removeIf(caso -> no_representativos.contains(caso.getProceso()));
     }
     
     // Aplica los filtros indicados al mapa de busqueda
@@ -128,7 +149,6 @@ public class Equipo {
                 mapa_filtrado.put(llave, lista_filtrada);
             }
         }
-        if(arreglo.equals(casos)) glosario_busquedas.put(("elementos columna " + numero_columna_llave), mapa_filtrado.size());
         return mapa_filtrado;
     }
     
@@ -217,143 +237,62 @@ public class Equipo {
     
     // Simula una jornada minuto a minuto
     
-    public void simular_jornada(double percentil_procesos){
-        int[] filtros = {8, 3};
+    public void simular_jornada(double inferior, double superior){
+        int[] filtros = {3};
         generar_mapa_busqueda(filtros);
-        ArrayList<Double> turno = new ArrayList<>();
-        ArrayList<Double> proceso = new ArrayList<>();
-        for (Object a : mapa_busqueda.keySet()) {
-            for (Object b : ((HashMap) mapa_busqueda.get(a)).keySet()) {
-                
+        double[] simulacion_jornada = new double[320];
+        ArrayList<Object> arreglo = new ArrayList<>();
+        for (Object proceso : mapa_busqueda.keySet()) {
+            if(!es_cotidiano(inferior, superior, (ArrayList<Caso>) mapa_busqueda.get(proceso), (String) proceso)) arreglo.add(proceso);
+        }
+        mapa_busqueda.keySet().removeIf(proceso -> arreglo.contains(proceso));
+        casos.removeIf(caso -> arreglo.contains(caso.getProceso()));
+        arreglo.clear();
+        double suma_tiempos_casos = 0;
+        for (Object proceso : mapa_busqueda.keySet()) {
+            double representatividad_general = calcular_representatividad_general((ArrayList<Caso>) mapa_busqueda.get(proceso));
+            double representatividad_dia = (double) glosario_busquedas.get("tiempo medio conversacion " + proceso)/19200;
+            while (representatividad_dia < representatividad_general ) {
+                arreglo.add(glosario_busquedas.get("tiempo medio conversacion " + proceso));
+                suma_tiempos_casos += (double) arreglo.get(arreglo.size()-1);
+                representatividad_dia += (double) glosario_busquedas.get("tiempo medio conversacion " + proceso)/19200;
+            }
+            representatividad_dia = 0;
+        }
+        if(suma_tiempos_casos < 19200) arreglo.add(19200 - suma_tiempos_casos);
+        Combinatoria combinatoria = new Combinatoria(arreglo);
+        double probabilidad = 0;
+        for (double[] simulacion : combinatoria.getMatriz_suma_indices()) {
+            for (double suma : simulacion) {
+                probabilidad = 1.0 / simulacion.length;
+                simulacion_jornada = calcular_rango(simulacion_jornada, suma, probabilidad);
             }
         }
-   
-    }
-    
-    /*
-    
-    
-    /*
-    // Calcula el tiempo necesario para desencolar
-    
-    public void calcular_tiempo_futuro_estado(double percentil_tiempo_descanso){
-        ArrayList<Double> lista_percentiles_representantes = new ArrayList<>();
-        ArrayList<Double> lista_percentiles_fechas = new ArrayList<>();
-        for (Object representante : mapa_busqueda.keySet()) {
-            lista_percentiles_fechas.clear();
-            for (Object fecha : mapa_busqueda.get(representante).keySet()) {
-                lista_percentiles_fechas.add(calcular_promedio_fecha(mapa_busqueda.get(representante).get(fecha)));
-            }
-            lista_percentiles_representantes.add(calcular_percentil_arreglo_double(percentil_tiempo_descanso, lista_percentiles_fechas));
-        }
-        tiempo_futuro_estado = calcular_promedio_double(lista_percentiles_representantes);
-    }
-    
-    /*
-    // Elimina los representantes que no cumplen con un porcentaje minimo de dias trabajados
-    
-    public void eliminar_no_representativos(double porcentaje_dias_trabajo){
-        int dias_trabajados = crear_filtros(2, 4, 4);
-        mapa_busqueda.values().removeIf(representante -> representante.size() < dias_trabajados*(porcentaje_dias_trabajo/100));
-        convertir_mapa_en_arreglo_original();
-    }
-
-    /*
-    // Convierte el mapa actual en arreglo de casos original
-    
-    public void convertir_mapa_en_arreglo_original(){
-        casos = new ArrayList<>();
-        for (Object llave : mapa_busqueda.keySet()) {
-            Collection<ArrayList<Caso>> lista_listas_casos = mapa_busqueda.get(llave).values(); 
-            Iterator<ArrayList<Caso>> iterador_lista_listas_casos = lista_listas_casos.iterator();
-            while (iterador_lista_listas_casos.hasNext()) {
-                casos.addAll(iterador_lista_listas_casos.next());
-            }
-        }
-    }
-*/
-    
-    
-    
-    /*
-    // Aplica filtros al mapa de busqueda y devuelve la cantidad de elementos no repetidos de una columna especificada
-    
-    public int crear_filtros(int numero_columna_primer_filtro, int numero_columna_segundo_filtro, int numero_columna_elementos_no_repetidos) {
-        mapa_busqueda.clear();
-        Object primer_filtro = null;
-        Object segundo_filtro = null;
-        Object elemento_columna = null;
-        ArrayList<Object> elementos_no_repetidos = new ArrayList<>();
-        for (Caso caso : casos) {
-            primer_filtro = objeto_filtro(numero_columna_primer_filtro, caso);
-            segundo_filtro = objeto_filtro(numero_columna_segundo_filtro, caso);
-            elemento_columna = objeto_filtro(numero_columna_elementos_no_repetidos, caso);
-            if (mapa_busqueda.containsKey(primer_filtro)) {
-                if (mapa_busqueda.get(primer_filtro).containsKey(segundo_filtro)) {
-                    mapa_busqueda.get(primer_filtro).get(segundo_filtro).add(caso);
-                } else {
-                    ArrayList<Caso> lista_filtro = new ArrayList<>();
-                    lista_filtro.add(caso);
-                    mapa_busqueda.get(primer_filtro).put(segundo_filtro, lista_filtro);
-                }
-            } else {
-                HashMap<Object, ArrayList<Caso>> mapa_busqueda_segundo_filtro = new HashMap<>();
-                ArrayList<Caso> lista_filtro = new ArrayList<>();
-                lista_filtro.add(caso);
-                mapa_busqueda_segundo_filtro.put(segundo_filtro, lista_filtro);
-                mapa_busqueda.put(primer_filtro, mapa_busqueda_segundo_filtro);
-            }
-            if(!elementos_no_repetidos.contains(elemento_columna)) elementos_no_repetidos.add(elemento_columna);
-        }
-        return elementos_no_repetidos.size();
-    }
-    
-    */
-    
-    
-    /*
-    
-    
-    
-    
-    // Simula una jornada laboral minuto a minuto
-    
-    public void simular_dia_representante(int percentil_inferior, int percentil_superior, double percentil_procesos){
-        simulacion_jornada = new double[320];
-        crear_filtros(3, 8, 3);
-     
-        System.out.println(mapa_busqueda.size());
-        mapa_busqueda.keySet().removeIf(nombre_proceso -> !es_cotidiano(percentil_inferior, percentil_superior, realizar_busqueda_un_filtro(nombre_proceso)));
-        System.out.println("----------------");
-        System.out.println(mapa_busqueda.size());
+        glosario_busquedas.put("simulacion jornada", simulacion_jornada);
     }
     
     // Define si un proceso es cotidiano o no
     
-    public boolean es_cotidiano(double percentil_inferior, double percentil_superior, ArrayList<Caso> proceso){
-        double dia = calcular_representatividad_dia(percentil_inferior, percentil_superior, proceso);
-        double general = calcular_representatividad_general(proceso);
-        if(dia <= general) return true;
-        return false;
-    }
-    
-    // Calcula la representatividad que tendria un caso de un proceso en la jornada de trabajo
-    
-    public double calcular_representatividad_dia(double percentil_inferior, double percentil_superior, ArrayList<Caso> proceso){
-        return  calcular_tiempo_promedio_proceso_rango(percentil_inferior, percentil_superior, proceso)/19200;
+    public boolean es_cotidiano(double inferior, double superior, ArrayList<Caso> proceso, String nombre_proceso){
+        glosario_busquedas.put(("representatividad " + nombre_proceso), (((double) proceso.size())/casos.size())*100);
+        return calcular_tiempo_promedio_proceso_rango(inferior, superior, proceso, nombre_proceso)/19200 <= ((double) proceso.size())/casos.size();
     }
     
     // Calcula el tiempo promedio de respuesta en el rango definido por dos percentiles
     
-    public double calcular_tiempo_promedio_proceso_rango(double percentil_inferior, double percentil_superior, ArrayList<Caso> proceso){
+    public double calcular_tiempo_promedio_proceso_rango(double inferior, double superior, ArrayList<Caso> proceso, String nombre_proceso){
+        Collections.sort(proceso);
         double suma = 0;
         int numero_casos = 0;
+        double p_inferior = calcular_percentil_arreglo_casos(inferior, proceso);
+        double p_superior = calcular_percentil_arreglo_casos(superior, proceso);
         for (int i = 0; i < proceso.size(); i++) {
-            if((proceso.get(i).getDuracion() >= calcular_percentil_arreglo_casos(percentil_inferior, proceso)) && (proceso.get(i).getDuracion() <= calcular_percentil_arreglo_casos(percentil_superior, proceso))){
+            if((proceso.get(i).getDuracion() >= p_inferior) && (proceso.get(i).getDuracion() <= p_superior)){
                 suma += proceso.get(i).getDuracion();
                 numero_casos ++;
             }
         }
+        glosario_busquedas.put(("tiempo medio conversacion " + nombre_proceso), suma / numero_casos);
         return suma / numero_casos;
     }
     
@@ -372,35 +311,20 @@ public class Equipo {
     // Calcula la representatividad del proceso con respecto a los otros
     
     public double calcular_representatividad_general(ArrayList<Caso> arreglo){
-        System.out.println(((double) arreglo.size())/ casos.size());
         return ((double) arreglo.size())/ casos.size();
     }
     
-    // Realiza la busqueda de los datos a partir de un filtro
+    // Asigna la probabilidad al rango de la jornada al que pertence el cierre de un caso
     
-    public ArrayList<Caso> realizar_busqueda_un_filtro(Object filtro){
-        System.out.println(filtro);
-        if (!mapa_busqueda.containsKey(filtro)) return new ArrayList<>();
-        Collection<ArrayList<Caso>> lista_listas_casos = mapa_busqueda.get(filtro).values(); 
-        ArrayList<Caso> lista_casos_filtro = new ArrayList<>();
-        Iterator<ArrayList<Caso>> iterador_lista_listas_casos = lista_listas_casos.iterator();
-        while (iterador_lista_listas_casos.hasNext()) {
-            lista_casos_filtro.addAll(iterador_lista_listas_casos.next());
+    public double[] calcular_rango(double[] simulacion_jornada, double suma_combinacion_sin_repeticion, double probabilidad){
+        for (int i = 0; i < simulacion_jornada.length; i++) {
+            if((suma_combinacion_sin_repeticion > 60*i) && (suma_combinacion_sin_repeticion <= 60*(i+1))){
+                simulacion_jornada[i] += probabilidad;
+                break;
+            }
         }
-        return lista_casos_filtro;
+        return simulacion_jornada;
     }
-    
-    // Realiza la busqueda de los datos a partir de dos filtros
-    
-    public ArrayList<Caso> realizar_busqueda_dos_filtros(Object primer_filtro, Object segunto_filtro){
-        if (!mapa_busqueda.containsKey(primer_filtro)){
-            return new ArrayList<>();
-        }else{
-            if (!mapa_busqueda.containsKey(primer_filtro)) return new ArrayList<>();
-            return mapa_busqueda.get(primer_filtro).get(segunto_filtro);
-        }
-    }
-*/
     
     // Muestra un arreglo de casos por consola
     
@@ -435,14 +359,6 @@ public class Equipo {
 
     public void setGlosario_busquedas(HashMap<String, Double> glosario_busquedas) {
         this.glosario_busquedas = glosario_busquedas;
-    }
-
-    public double[] getSimulacion_jornada() {
-        return simulacion_jornada;
-    }
-
-    public void setSimulacion_jornada(double[] simulacion_jornada) {
-        this.simulacion_jornada = simulacion_jornada;
     }
 
 }
