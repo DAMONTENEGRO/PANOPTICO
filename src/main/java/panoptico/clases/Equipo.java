@@ -52,6 +52,7 @@ public class Equipo {
         FileInputStream archivo = new FileInputStream(new File("Base de datos.xlsx"));
         Workbook documento_excel = new XSSFWorkbook(archivo);
         Sheet hoja = documento_excel.getSheetAt(0);
+        System.out.println("Analizando " + hoja.getLastRowNum() + " casos y " + (hoja.getLastRowNum()*8) + " datos... ");
         casos = new ArrayList<>(); 
         Iterator<Row> iterador_filas = hoja.iterator();
         while (iterador_filas.hasNext()) {
@@ -64,6 +65,7 @@ public class Equipo {
         mapa_busqueda = new HashMap<>();
         glosario_busquedas = new HashMap<>();
         eliminar_no_representativos(representatividad_representante, percentil_tiempo_futuro_estado, percentil_procesos);
+        System.out.println("Cargando la aplicacion... ");
         simular_jornada(inferior, superior);
     }
 
@@ -120,7 +122,7 @@ public class Equipo {
     
     // Retorna un mapa de busqueda con varios filtros
     
-    public HashMap filtrar_mapa_busqueda(ArrayList<Caso> arreglo, int[] filtros){
+    static HashMap filtrar_mapa_busqueda(ArrayList<Caso> arreglo, int[] filtros){
         HashMap mapa_filtrado = crear_mapa_busqueda(arreglo, filtros[0]);
         if(filtros.length == 1){
             return mapa_filtrado;
@@ -136,7 +138,7 @@ public class Equipo {
     
     // Crea un mapa de busqueda a partir de un arreglo dinamico
     
-    public HashMap crear_mapa_busqueda(ArrayList<Caso> arreglo, int numero_columna_llave){
+    static HashMap crear_mapa_busqueda(ArrayList<Caso> arreglo, int numero_columna_llave){
         HashMap<Object, ArrayList<Caso>> mapa_filtrado = new HashMap<>();
         Object llave = null;
         for (Caso caso : arreglo) {
@@ -154,7 +156,7 @@ public class Equipo {
     
     // Devuelve el tipo de objeto segun la columna elegida
 
-    public Object objeto_filtro(int numero_columna_filtro, Caso caso) {
+    static Object objeto_filtro(int numero_columna_filtro, Caso caso) {
         switch (numero_columna_filtro) {
             case 1:
                 return caso.getSkill();
@@ -268,7 +270,7 @@ public class Equipo {
                 simulacion_jornada = calcular_rango(simulacion_jornada, suma, probabilidad);
             }
         }
-        glosario_busquedas.put("simulacion jornada", simulacion_jornada);
+        glosario_busquedas.put("simulacion jornada equipo", simulacion_jornada);
     }
     
     // Define si un proceso es cotidiano o no

@@ -90,7 +90,8 @@ public class Caso implements Comparable<Caso> {
     // Muestra el caso con todos sus atributos por consola
     
     void mostrar_caso_consola(){
-        System.out.println(skill + " - " + nombre_usuario + " - " + proceso + " - " + fecha + " - " + id + " - " + duracion + " - " + tl + " - " + turno);
+        System.out.print("(Skill): " + skill + " - " + "(Nombre usuario): " + nombre_usuario + " - " + "(Proceso): " + proceso + " - " + "(Fecha): " + fecha);
+        System.out.println(" - " + "(Id): " + id + " - " + "(Duracion): " + duracion + " - " + "(Lider): " + tl + " - " + "(Turno): " + turno);
     }
     
     // G&S
