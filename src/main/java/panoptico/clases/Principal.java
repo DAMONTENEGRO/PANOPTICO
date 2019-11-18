@@ -17,12 +17,14 @@ public class Principal {
     static void busqueda_filtrada(int cantidad_datos, int[] filtros, ArrayList<Caso> arreglo){
         ArrayList<Caso> arreglo_cantidad_datos = new ArrayList<>();
         int longitud_arreglo = cantidad_datos/8;
+        int indice = 0;
         for (int i = 0; i < longitud_arreglo; i++) {
-            if(i >= arreglo.size()){
-               arreglo_cantidad_datos.add(arreglo.get((longitud_arreglo-1)-i)); 
+            if(indice >= arreglo.size()-1){
+                indice = 0;
             }else{
-               arreglo_cantidad_datos.add(arreglo.get(i)); 
-            } 
+                indice++ ;
+            }
+            arreglo_cantidad_datos.add(arreglo.get(indice)); 
         }
         HashMap mapa_busqueda = Equipo.filtrar_mapa_busqueda(arreglo_cantidad_datos, filtros);
         ArrayList<Object> objetos_buscados = new ArrayList<>();
