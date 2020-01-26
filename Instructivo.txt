@@ -1,0 +1,8 @@
+1. Abre la carpeta donde esta el archivo
+2. En la barra superior escribe "cmd"
+3. Escribe en la pantalla que te aparecio "java -jar Proyecto_Panoptico.jar"
+4. Al iniciar el programa te solicitara la ruta a la base de datos que deseas analizar, para saber la ruta de la base de datos 
+tienes que mantener presionada la tecla "Shift" y luego dar clic derecho; por ultimo elige la opcion “Copiar como ruta de acceso”.
+5. Listo ya puedes hacer uso del programa desde la consola de tu computadora.
+
+Nota: Ten presente quitar las comillas a la ruta del archivo que creaste desde la opcion “Copiar como ruta de acceso”.
